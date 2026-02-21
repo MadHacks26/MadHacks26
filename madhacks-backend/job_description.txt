@@ -1,0 +1,37 @@
+Role Overview:
+
+As a Qualcomm Software Engineering Intern, you’ll have the opportunity to push the boundaries of what exists and help establish the new standards for tomorrow. You will innovate as an equal contributor on teams of world-class engineers to develop, implement, and maintain software for the most complex wireless devices in the industry today. You will leverage your computer science or engineering degree to make an immediate impact on the software development life cycle of one of Qualcomm’s numerous software technologies.
+
+This internship supports the Software Engineering track. Based on your resume you will be aligned to projects within this track. 
+
+Minimum Qualifications
+
+Currently enrolled in a bachelor’s or master’s degree program in computer engineering, computer science, electrical engineering, or a related field
+
+Must be available for 11–14 weeks during Summer 2026 (May–September)
+
+Expected graduation date of  November 2026 or later
+
+1+ years of academic experience with programming languages such as C, C++, or Python
+
+Preferred Qualifications :
+
+Candidates actively pursuing a degree with an anticipated graduation between November 2026 and June 2027
+
+Extensive programming in C/C++
+
+Object-oriented software design and development
+
+Distributed systems and networking protocols
+
+Multi-threaded programming
+
+Multi-core and multi-processor systems
+
+System performance optimization
+
+Experience in complex software debugging
+
+Knowledge of modeling concepts (e.g., discrete event simulation, polyglot programming)
+
+Knowledge of networking concepts (e.g., bridging, routing), especially in Linux
