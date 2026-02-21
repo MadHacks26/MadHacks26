@@ -68,19 +68,19 @@ const stepVariants = {
 export default function Home() {
   const [step, setStep] = React.useState<Step>(0);
 
-  const [dsaConcepts, setDsaConcepts] = React.useState<string[]>([
+  const dsaConcepts = [
     "Arrays & Strings",
     "Hashmaps",
     "Two Pointers",
     "Sliding Window",
-  ]);
-
-  const [coreConcepts, setCoreConcepts] = React.useState<string[]>([
+  ];
+  
+  const coreConcepts = [
     "Big-O Complexity",
     "Recursion",
     "Sorting & Searching",
     "Bit Manipulation",
-  ]);
+  ];
 
   const [name, setName] = React.useState("");
   const [role, setRole] = React.useState("");
