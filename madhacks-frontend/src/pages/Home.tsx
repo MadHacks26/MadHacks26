@@ -14,14 +14,14 @@ function clampName(name: string) {
   return name.trim().slice(0, 24);
 }
 
-function syncLevels(
-  concepts: string[],
+function syncLevelsFromKeys(
+  keys: string[],
   prev: Record<string, number>,
   defaultValue = 4
 ) {
   const next: Record<string, number> = {};
-  for (const c of concepts) {
-    next[c] = typeof prev[c] === "number" ? prev[c] : defaultValue;
+  for (const k of keys) {
+    next[k] = typeof prev[k] === "number" ? prev[k] : defaultValue;
   }
   return next;
 }
@@ -65,22 +65,75 @@ const stepVariants = {
   exit: { opacity: 0, y: -10, filter: "blur(4px)" },
 };
 
+type ConceptsResponse = {
+  dsaConcepts: Record<string, number>;
+  coreConcepts: Record<string, number>;
+};
+
+type ConceptProfile = {
+  dsa_topics: Record<string, { importance: number; confidence: number }>;
+  core_fundamentals: Record<string, { importance: number; confidence: number }>;
+};
+
+function buildConceptProfile(params: {
+  dsaConcepts: Record<string, number>;
+  dsaLevels: Record<string, number>;
+  coreConcepts: Record<string, number>;
+  coreLevels: Record<string, number>;
+  defaultConfidence?: number;
+}): ConceptProfile {
+  const {
+    dsaConcepts,
+    dsaLevels,
+    coreConcepts,
+    coreLevels,
+    defaultConfidence = 4,
+  } = params;
+
+  const dsa_topics: ConceptProfile["dsa_topics"] = {};
+  for (const [topic, importance] of Object.entries(dsaConcepts)) {
+    dsa_topics[topic] = {
+      importance: Number(importance),
+      confidence:
+        typeof dsaLevels[topic] === "number" ? dsaLevels[topic] : defaultConfidence,
+    };
+  }
+
+  const core_fundamentals: ConceptProfile["core_fundamentals"] = {};
+  for (const [topic, importance] of Object.entries(coreConcepts)) {
+    core_fundamentals[topic] = {
+      importance: Number(importance),
+      confidence:
+        typeof coreLevels[topic] === "number"
+          ? coreLevels[topic]
+          : defaultConfidence,
+    };
+  }
+
+  return { dsa_topics, core_fundamentals };
+}
+
 export default function Home() {
   const [step, setStep] = React.useState<Step>(0);
 
-  const dsaConcepts = [
-    "Arrays & Strings",
-    "Hashmaps",
-    "Two Pointers",
-    "Sliding Window",
-  ];
-  
-  const coreConcepts = [
-    "Big-O Complexity",
-    "Recursion",
-    "Sorting & Searching",
-    "Bit Manipulation",
-  ];
+  const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
+    "Arrays & Strings": 1,
+    Hashmap: 1,
+    "Two Pointers": 1,
+    "Sliding Window": 1,
+  });
+
+  const [coreConcepts, setCoreConcepts] = React.useState<Record<string, number>>(
+    {
+      "Big-O Complexity": 1,
+      Recursion: 1,
+      "Sorting & Searching": 1,
+      "Bit Manipulation": 1,
+    }
+  );
+
+  const [conceptsLoading, setConceptsLoading] = React.useState(false);
+  const [conceptsError, setConceptsError] = React.useState<string | null>(null);
 
   const [name, setName] = React.useState("");
   const [role, setRole] = React.useState("");
@@ -90,17 +143,26 @@ export default function Home() {
   const [prepDays, setPrepDays] = React.useState<string>("");
   const [hoursPerDay, setHoursPerDay] = React.useState<string>("");
 
-  const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>({});
-  const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(
-    {}
+  // Slider confidence levels
+  const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>(() =>
+    Object.fromEntries(Object.keys(dsaConcepts).map((c) => [c, 4]))
   );
 
+  const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(() =>
+    Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 4]))
+  );
+
+  // Keep slider keys in sync when backend replaces concepts
   React.useEffect(() => {
-    setDsaLevels((prev) => syncLevels(dsaConcepts, prev, 4));
+    setDsaLevels((prev) =>
+      syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 4)
+    );
   }, [dsaConcepts]);
 
   React.useEffect(() => {
-    setCoreLevels((prev) => syncLevels(coreConcepts, prev, 4));
+    setCoreLevels((prev) =>
+      syncLevelsFromKeys(Object.keys(coreConcepts), prev, 4)
+    );
   }, [coreConcepts]);
 
   const safeName = clampName(name);
@@ -114,8 +176,79 @@ export default function Home() {
     step === 3 ||
     step === 4;
 
-  function next() {
+  async function fetchConcepts(): Promise<boolean> {
+    setConceptsLoading(true);
+    setConceptsError(null);
+
+    try {
+      // NOTE: if your backend is on :8000, use:
+      // const r = await fetch("http://127.0.0.1:8000/api/concepts", { ... })
+      const r = await fetch("/api/concepts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: role.trim(),
+          company: company.trim(),
+          jobLink: jobLink.trim(),
+        }),
+      });
+
+      if (!r.ok) throw new Error(await r.text());
+
+      const data = (await r.json()) as Partial<ConceptsResponse>;
+
+      if (
+        !data.dsaConcepts ||
+        typeof data.dsaConcepts !== "object" ||
+        Array.isArray(data.dsaConcepts) ||
+        !data.coreConcepts ||
+        typeof data.coreConcepts !== "object" ||
+        Array.isArray(data.coreConcepts)
+      ) {
+        throw new Error("Backend returned invalid concept format");
+      }
+
+      const cleanDsa: Record<string, number> = {};
+      for (const [k, v] of Object.entries(data.dsaConcepts)) {
+        const key = String(k).trim();
+        const num = Number(v);
+        if (!key) continue;
+        if (Number.isFinite(num)) cleanDsa[key] = num;
+      }
+
+      const cleanCore: Record<string, number> = {};
+      for (const [k, v] of Object.entries(data.coreConcepts)) {
+        const key = String(k).trim();
+        const num = Number(v);
+        if (!key) continue;
+        if (Number.isFinite(num)) cleanCore[key] = num;
+      }
+
+      if (Object.keys(cleanDsa).length === 0 || Object.keys(cleanCore).length === 0) {
+        throw new Error("Backend returned empty concepts");
+      }
+
+      setDsaConcepts(cleanDsa);
+      setCoreConcepts(cleanCore);
+
+      return true;
+    } catch (e: any) {
+      setConceptsError(e?.message ?? "Failed to generate concepts");
+      return false;
+    } finally {
+      setConceptsLoading(false);
+    }
+  }
+
+  async function next() {
     if (!canGoNext) return;
+
+    // Step 1 -> Step 2: generate concepts immediately
+    if (step === 1) {
+      const ok = await fetchConcepts();
+      if (!ok) return;
+    }
+
     setStep((s) => Math.min(4, (s + 1) as Step) as Step);
   }
 
@@ -127,15 +260,12 @@ export default function Home() {
     if (e.key !== "Enter") return;
     if (!canGoNext) return;
     e.preventDefault();
-    next();
+    void next();
   }
 
   function setSlider(group: "dsa" | "core", key: string, value: number) {
-    if (group === "dsa") {
-      setDsaLevels((prev) => ({ ...prev, [key]: value }));
-    } else {
-      setCoreLevels((prev) => ({ ...prev, [key]: value }));
-    }
+    if (group === "dsa") setDsaLevels((prev) => ({ ...prev, [key]: value }));
+    else setCoreLevels((prev) => ({ ...prev, [key]: value }));
   }
 
   const [hoursTooltipOpen, setHoursTooltipOpen] = React.useState(false);
@@ -143,8 +273,7 @@ export default function Home() {
 
   function showHoursTooltip() {
     setHoursTooltipOpen(true);
-    if (hoursTooltipTimer.current)
-      window.clearTimeout(hoursTooltipTimer.current);
+    if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
     hoursTooltipTimer.current = window.setTimeout(() => {
       setHoursTooltipOpen(false);
     }, 1600);
@@ -152,12 +281,19 @@ export default function Home() {
 
   React.useEffect(() => {
     return () => {
-      if (hoursTooltipTimer.current)
-        window.clearTimeout(hoursTooltipTimer.current);
+      if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
     };
   }, []);
 
   function finish() {
+    const conceptProfile = buildConceptProfile({
+      dsaConcepts,
+      dsaLevels,
+      coreConcepts,
+      coreLevels,
+      defaultConfidence: 4,
+    });
+
     const payload = {
       name: safeName,
       role: role.trim(),
@@ -165,13 +301,18 @@ export default function Home() {
       jobLink: jobLink.trim(),
       prepDays: parsePositiveInt(prepDays),
       hoursPerDay: parseHours(hoursPerDay),
+
       dsaLevels,
       coreLevels,
+      dsaConcepts,
+      coreConcepts,
+
+      conceptProfile,
     };
 
     saveProfile(payload);
-
     console.log("Saved Profile:", payload);
+    console.log("User Profile:", conceptProfile);
     alert("Saved. Check Console.");
   }
 
@@ -243,7 +384,7 @@ export default function Home() {
                     <div />
                     <button
                       className={buttonPrimary}
-                      onClick={next}
+                      onClick={() => void next()}
                       disabled={!canGoNext}
                     >
                       Start
@@ -311,16 +452,20 @@ export default function Home() {
                     </div>
                   </div>
 
+                  {conceptsError && (
+                    <p className="mt-4 text-sm text-red-600">{conceptsError}</p>
+                  )}
+
                   <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={back}>
                       Back
                     </button>
                     <button
                       className={buttonPrimary}
-                      onClick={next}
-                      disabled={!canGoNext}
+                      onClick={() => void next()}
+                      disabled={!canGoNext || conceptsLoading}
                     >
-                      Next
+                      {conceptsLoading ? "Generating..." : "Next"}
                     </button>
                   </div>
                 </motion.div>
@@ -403,16 +548,8 @@ export default function Home() {
                         <AnimatePresence>
                           {hoursTooltipOpen && (
                             <motion.div
-                              initial={{
-                                opacity: 0,
-                                y: 6,
-                                filter: "blur(6px)",
-                              }}
-                              animate={{
-                                opacity: 1,
-                                y: 0,
-                                filter: "blur(0px)",
-                              }}
+                              initial={{ opacity: 0, y: 6, filter: "blur(6px)" }}
+                              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                               exit={{ opacity: 0, y: 6, filter: "blur(6px)" }}
                               transition={{
                                 duration: 0.22,
@@ -436,7 +573,7 @@ export default function Home() {
                     </button>
                     <button
                       className={buttonPrimary}
-                      onClick={next}
+                      onClick={() => void next()}
                       disabled={!canGoNext}
                     >
                       Next
@@ -460,12 +597,12 @@ export default function Home() {
                   </p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    {dsaConcepts.map((c) => (
+                    {Object.entries(dsaConcepts).map(([topic]) => (
                       <LevelSlider
-                        key={c}
-                        label={c}
-                        value={dsaLevels[c] ?? 4}
-                        onChange={(v) => setSlider("dsa", c, v)}
+                        key={topic}
+                        label={topic}
+                        value={dsaLevels[topic] ?? 4}
+                        onChange={(v) => setSlider("dsa", topic, v)}
                         leftLabel="Weak"
                         rightLabel="Strong"
                       />
@@ -476,7 +613,7 @@ export default function Home() {
                     <button className={buttonGhost} onClick={back}>
                       Back
                     </button>
-                    <button className={buttonPrimary} onClick={next}>
+                    <button className={buttonPrimary} onClick={() => void next()}>
                       Next
                     </button>
                   </div>
@@ -498,14 +635,14 @@ export default function Home() {
                   </p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    {coreConcepts.map((c) => (
+                    {Object.entries(coreConcepts).map(([topic]) => (
                       <LevelSlider
-                        key={c}
-                        label={c}
-                        value={coreLevels[c] ?? 4}
-                        onChange={(v) => setSlider("core", c, v)}
-                        leftLabel="New"
-                        rightLabel="Confident"
+                        key={topic}
+                        label={topic}
+                        value={coreLevels[topic] ?? 4}
+                        onChange={(v) => setSlider("core", topic, v)}
+                        leftLabel="Weak"
+                        rightLabel="Strong"
                       />
                     ))}
                   </div>
