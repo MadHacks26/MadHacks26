@@ -4,22 +4,43 @@ import LevelSlider from "../components/LevelSlider";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 
-const dsaConcepts = [
-  "Arrays & Strings",
-  "Hashmaps",
-  "Two Pointers",
-  "Sliding Window",
-];
+const PROFILE_KEY = "madhacks_profile_v1";
 
-const coreConcepts = [
-  "Big-O Complexity",
-  "Recursion",
-  "Sorting & Searching",
-  "Bit Manipulation",
-];
+function saveProfile(profile: any) {
+  localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+}
 
 function clampName(name: string) {
   return name.trim().slice(0, 24);
+}
+
+function syncLevels(
+  concepts: string[],
+  prev: Record<string, number>,
+  defaultValue = 4
+) {
+  const next: Record<string, number> = {};
+  for (const c of concepts) {
+    next[c] = typeof prev[c] === "number" ? prev[c] : defaultValue;
+  }
+  return next;
+}
+
+function parsePositiveInt(s: string) {
+  const n = Number(s);
+  if (!Number.isFinite(n)) return null;
+  if (!Number.isInteger(n)) return null;
+  if (n <= 0) return null;
+  if (n > 365) return null;
+  return n;
+}
+
+function parseHours(s: string) {
+  const n = Number(s);
+  if (!Number.isFinite(n)) return null;
+  if (n <= 0) return null;
+  if (n > 23) return null;
+  return n;
 }
 
 const pageWrap =
@@ -44,39 +65,43 @@ const stepVariants = {
   exit: { opacity: 0, y: -10, filter: "blur(4px)" },
 };
 
-function parsePositiveInt(s: string) {
-  const n = Number(s);
-  if (!Number.isFinite(n)) return null;
-  if (!Number.isInteger(n)) return null;
-  if (n <= 0) return null;
-  if (n > 365) return null; // prep days max (adjust if you want)
-  return n;
-}
-
-function parseHours(s: string) {
-  const n = Number(s);
-  if (!Number.isFinite(n)) return null;
-  if (n <= 0) return null;
-  if (n > 23) return null;
-  return n;
-}
-
 export default function Home() {
   const [step, setStep] = React.useState<Step>(0);
+
+  const [dsaConcepts, setDsaConcepts] = React.useState<string[]>([
+    "Arrays & Strings",
+    "Hashmaps",
+    "Two Pointers",
+    "Sliding Window",
+  ]);
+
+  const [coreConcepts, setCoreConcepts] = React.useState<string[]>([
+    "Big-O Complexity",
+    "Recursion",
+    "Sorting & Searching",
+    "Bit Manipulation",
+  ]);
 
   const [name, setName] = React.useState("");
   const [role, setRole] = React.useState("");
   const [company, setCompany] = React.useState("");
+  const [jobLink, setJobLink] = React.useState("");
 
   const [prepDays, setPrepDays] = React.useState<string>("");
   const [hoursPerDay, setHoursPerDay] = React.useState<string>("");
 
-  const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>(() =>
-    Object.fromEntries(dsaConcepts.map((c) => [c, 4]))
-  );
+  const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>({});
   const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(
-    () => Object.fromEntries(coreConcepts.map((c) => [c, 4]))
+    {}
   );
+
+  React.useEffect(() => {
+    setDsaLevels((prev) => syncLevels(dsaConcepts, prev, 4));
+  }, [dsaConcepts]);
+
+  React.useEffect(() => {
+    setCoreLevels((prev) => syncLevels(coreConcepts, prev, 4));
+  }, [coreConcepts]);
 
   const safeName = clampName(name);
 
@@ -113,13 +138,13 @@ export default function Home() {
     }
   }
 
-  // Tooltip for >23 hours attempt
   const [hoursTooltipOpen, setHoursTooltipOpen] = React.useState(false);
   const hoursTooltipTimer = React.useRef<number | null>(null);
 
   function showHoursTooltip() {
     setHoursTooltipOpen(true);
-    if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
+    if (hoursTooltipTimer.current)
+      window.clearTimeout(hoursTooltipTimer.current);
     hoursTooltipTimer.current = window.setTimeout(() => {
       setHoursTooltipOpen(false);
     }, 1600);
@@ -127,7 +152,8 @@ export default function Home() {
 
   React.useEffect(() => {
     return () => {
-      if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
+      if (hoursTooltipTimer.current)
+        window.clearTimeout(hoursTooltipTimer.current);
     };
   }, []);
 
@@ -136,15 +162,17 @@ export default function Home() {
       name: safeName,
       role: role.trim(),
       company: company.trim(),
+      jobLink: jobLink.trim(),
       prepDays: parsePositiveInt(prepDays),
       hoursPerDay: parseHours(hoursPerDay),
       dsaLevels,
       coreLevels,
     };
-    console.log("Profile:", payload);
-    alert(
-      "Profile saved locally (check console)"
-    );
+
+    saveProfile(payload);
+
+    console.log("Saved Profile:", payload);
+    alert("Saved. Check Console.");
   }
 
   return (
@@ -267,6 +295,20 @@ export default function Home() {
                         onKeyDown={onEnterNext}
                       />
                     </div>
+
+                    <div className="grid gap-2 sm:col-span-2">
+                      <label className="text-xs font-medium text-neutral-600">
+                        Job posting link
+                      </label>
+                      <input
+                        type="url"
+                        className={inputBase}
+                        placeholder=""
+                        value={jobLink}
+                        onChange={(e) => setJobLink(e.target.value)}
+                        onKeyDown={onEnterNext}
+                      />
+                    </div>
                   </div>
 
                   <div className="mt-8 flex items-center justify-between">
@@ -342,7 +384,6 @@ export default function Home() {
                             if (/^\d*\.?\d*$/.test(v)) {
                               const num = Number(v);
 
-                              // allow intermediate like "." or "2."
                               if (!Number.isFinite(num)) {
                                 setHoursPerDay(v);
                                 return;
@@ -362,8 +403,16 @@ export default function Home() {
                         <AnimatePresence>
                           {hoursTooltipOpen && (
                             <motion.div
-                              initial={{ opacity: 0, y: 6, filter: "blur(6px)" }}
-                              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                              initial={{
+                                opacity: 0,
+                                y: 6,
+                                filter: "blur(6px)",
+                              }}
+                              animate={{
+                                opacity: 1,
+                                y: 0,
+                                filter: "blur(0px)",
+                              }}
                               exit={{ opacity: 0, y: 6, filter: "blur(6px)" }}
                               transition={{
                                 duration: 0.22,
