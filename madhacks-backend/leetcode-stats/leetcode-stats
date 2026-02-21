@@ -1,0 +1,175 @@
+import requests
+from typing import Dict
+
+LEETCODE_GRAPHQL_URL = "https://leetcode.com/graphql"
+
+# -----------------------------
+# GraphQL Query
+# -----------------------------
+TOPIC_STATS_QUERY = """
+query userProblemsSolved($username: String!) {
+  matchedUser(username: $username) {
+    tagProblemCounts {
+      advanced {
+        tagName
+        problemsSolved
+      }
+      intermediate {
+        tagName
+        problemsSolved
+      }
+      fundamental {
+        tagName
+        problemsSolved
+      }
+    }
+  }
+}
+"""
+
+# -----------------------------
+# Session + CSRF
+# -----------------------------
+def create_session() -> tuple:
+    session = requests.Session()
+    session.headers.update({
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                      "AppleWebKit/537.36 (KHTML, like Gecko) "
+                      "Chrome/120.0.0.0 Safari/537.36"
+    })
+    session.get("https://leetcode.com", timeout=15)
+    csrf_token = session.cookies.get("csrftoken", "")
+    return session, csrf_token
+
+# -----------------------------
+# GraphQL Helper
+# -----------------------------
+def graphql_request(session: requests.Session, csrf_token: str, query: str, variables: Dict) -> Dict:
+    headers = {
+        "Content-Type": "application/json",
+        "Referer": "https://leetcode.com",
+        "x-csrftoken": csrf_token,
+    }
+    response = session.post(
+        LEETCODE_GRAPHQL_URL,
+        json={"query": query, "variables": variables},
+        headers=headers,
+        timeout=15,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if "errors" in data:
+        raise RuntimeError(data["errors"])
+    return data["data"]
+
+# -----------------------------
+# Fetch topic stats
+# -----------------------------
+def get_leetcode_topic_stats(username: str) -> Dict[str, Dict[str, int]]:
+    print(f"Creating session and fetching CSRF token...")
+    session, csrf_token = create_session()
+
+    if not csrf_token:
+        print("Warning: Could not obtain CSRF token. Request may fail.")
+    else:
+        print(f"CSRF token obtained successfully.")
+
+    print(f"Fetching topic stats for user: {username}")
+    data = graphql_request(session, csrf_token, TOPIC_STATS_QUERY, {"username": username})
+
+    matched_user = data.get("matchedUser")
+    if not matched_user:
+        raise ValueError(f"User '{username}' not found or profile is private.")
+
+    tag_counts = matched_user["tagProblemCounts"]
+
+    # Map LeetCode bucket names to readable difficulty labels
+    bucket_to_difficulty = {
+        "fundamental": "Easy",
+        "intermediate": "Medium",
+        "advanced":     "Hard",
+    }
+
+    # topic_stats[tag] = {"Easy": x, "Medium": y, "Hard": z, "Total": n}
+    topic_stats: Dict[str, Dict[str, int]] = {}
+
+    for bucket, difficulty in bucket_to_difficulty.items():
+        for entry in tag_counts.get(bucket, []):
+            tag = entry["tagName"]
+            solved = entry["problemsSolved"]
+            if solved > 0:
+                if tag not in topic_stats:
+                    topic_stats[tag] = {"Easy": 0, "Medium": 0, "Hard": 0, "Total": 0}
+                topic_stats[tag][difficulty] += solved
+                topic_stats[tag]["Total"] += solved
+
+    return topic_stats
+
+# -----------------------------
+# Display
+# -----------------------------
+def display_stats(username: str, stats: Dict[str, Dict[str, int]]):
+    if not stats:
+        print("No topic data found. Make sure the profile is public.")
+        return
+
+    col_topic  = 35
+    col_easy   = 8
+    col_medium = 9
+    col_hard   = 8
+    col_total  = 8
+    total_width = col_topic + col_easy + col_medium + col_hard + col_total + 4
+
+    print(f"\n=== Topic-wise Completion Stats for '{username}' ===\n")
+    print(
+        f"{'Topic':<{col_topic}}"
+        f"{'Easy':>{col_easy}}"
+        f"{'Medium':>{col_medium}}"
+        f"{'Hard':>{col_hard}}"
+        f"{'Total':>{col_total}}"
+    )
+    print("-" * total_width)
+
+    for topic, counts in sorted(stats.items(), key=lambda x: -x[1]["Total"]):
+        easy   = counts["Easy"]   if counts["Easy"]   > 0 else "-"
+        medium = counts["Medium"] if counts["Medium"] > 0 else "-"
+        hard   = counts["Hard"]   if counts["Hard"]   > 0 else "-"
+        print(
+            f"{topic:<{col_topic}}"
+            f"{easy:>{col_easy}}"
+            f"{medium:>{col_medium}}"
+            f"{hard:>{col_hard}}"
+            f"{counts['Total']:>{col_total}}"
+        )
+
+    print("-" * total_width)
+
+    # Footer totals
+    total_easy   = sum(v["Easy"]   for v in stats.values())
+    total_medium = sum(v["Medium"] for v in stats.values())
+    total_hard   = sum(v["Hard"]   for v in stats.values())
+    total_all    = sum(v["Total"]  for v in stats.values())
+
+    print(
+        f"{'TOTAL':<{col_topic}}"
+        f"{total_easy:>{col_easy}}"
+        f"{total_medium:>{col_medium}}"
+        f"{total_hard:>{col_hard}}"
+        f"{total_all:>{col_total}}"
+    )
+
+# -----------------------------
+# Main
+# -----------------------------
+if __name__ == "__main__":
+    username = input("Enter LeetCode username: ").strip()
+    try:
+        stats = get_leetcode_topic_stats(username)
+        display_stats(username, stats)
+
+    except ValueError as e:
+        print(f"Error: {e}")
+    except requests.HTTPError as e:
+        print(f"HTTP Error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
