@@ -140,6 +140,11 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
     job_description_text = job_description_text.replace("{{company_name}}", company_name)
     job_description_text = job_description_text.replace("{{job_role}}", job_role)
     job_description_text = job_description_text.replace("{{job_link}}", job_link)
+    job_description_text = job_description_text.replace("{{dsa_topics}}", dsa_topics)
+    job_description_text = job_description_text.replace("{{core_fundamentals}}", core_fundamentals)
+    job_description_text = job_description_text.replace("{{total_prep_days}}", total_prep_days)
+    job_description_text = job_description_text.replace("{{daily_hours}}", daily_hours)
+    generate(job_description=job_description_text)
 
     out = generate(job_description=job_description_text)
     data = _extract_json(out)
@@ -152,7 +157,6 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
 
     dsa_map = _coerce_topic_score_map(data.get("dsa_topics"))
     core_map = _coerce_topic_score_map(data.get("core_fundamentals"))
-
     # Keep insertion order as returned by model
     dsa_map = dict(list(dsa_map.items())[:10])
     core_map = dict(list(core_map.items())[:10])
