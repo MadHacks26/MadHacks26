@@ -153,7 +153,6 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
     dsa_map = _coerce_topic_score_map(data.get("dsa_topics"))
     core_map = _coerce_topic_score_map(data.get("core_fundamentals"))
 
-    # Cap sizes for UI sanity
     # Keep insertion order as returned by model
     dsa_map = dict(list(dsa_map.items())[:10])
     core_map = dict(list(core_map.items())[:10])
