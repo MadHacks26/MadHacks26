@@ -1,6 +1,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import LevelSlider from "../components/LevelSlider";
+import { useNavigate } from "react-router-dom";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 
@@ -95,7 +96,9 @@ function buildConceptProfile(params: {
     dsa_topics[topic] = {
       importance: Number(importance),
       confidence:
-        typeof dsaLevels[topic] === "number" ? dsaLevels[topic] : defaultConfidence,
+        typeof dsaLevels[topic] === "number"
+          ? dsaLevels[topic]
+          : defaultConfidence,
     };
   }
 
@@ -114,6 +117,7 @@ function buildConceptProfile(params: {
 }
 
 export default function Home() {
+  const navigate = useNavigate();
   const [step, setStep] = React.useState<Step>(0);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
@@ -123,14 +127,14 @@ export default function Home() {
     "Sliding Window": 1,
   });
 
-  const [coreConcepts, setCoreConcepts] = React.useState<Record<string, number>>(
-    {
-      "Big-O Complexity": 1,
-      Recursion: 1,
-      "Sorting & Searching": 1,
-      "Bit Manipulation": 1,
-    }
-  );
+  const [coreConcepts, setCoreConcepts] = React.useState<
+    Record<string, number>
+  >({
+    "Big-O Complexity": 1,
+    Recursion: 1,
+    "Sorting & Searching": 1,
+    "Bit Manipulation": 1,
+  });
 
   const [conceptsLoading, setConceptsLoading] = React.useState(false);
   const [conceptsError, setConceptsError] = React.useState<string | null>(null);
@@ -143,16 +147,14 @@ export default function Home() {
   const [prepDays, setPrepDays] = React.useState<string>("");
   const [hoursPerDay, setHoursPerDay] = React.useState<string>("");
 
-  // Slider confidence levels
   const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>(() =>
     Object.fromEntries(Object.keys(dsaConcepts).map((c) => [c, 4]))
   );
 
-  const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(() =>
-    Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 4]))
+  const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(
+    () => Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 4]))
   );
 
-  // Keep slider keys in sync when backend replaces concepts
   React.useEffect(() => {
     setDsaLevels((prev) =>
       syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 4)
@@ -181,7 +183,6 @@ export default function Home() {
     setConceptsError(null);
 
     try {
-      // NOTE: if your backend is on :8000, use:
       // const r = await fetch("http://127.0.0.1:8000/api/concepts", { ... })
       const r = await fetch("/api/concepts", {
         method: "POST",
@@ -224,7 +225,10 @@ export default function Home() {
         if (Number.isFinite(num)) cleanCore[key] = num;
       }
 
-      if (Object.keys(cleanDsa).length === 0 || Object.keys(cleanCore).length === 0) {
+      if (
+        Object.keys(cleanDsa).length === 0 ||
+        Object.keys(cleanCore).length === 0
+      ) {
         throw new Error("Backend returned empty concepts");
       }
 
@@ -243,7 +247,6 @@ export default function Home() {
   async function next() {
     if (!canGoNext) return;
 
-    // Step 1 -> Step 2: generate concepts immediately
     if (step === 1) {
       const ok = await fetchConcepts();
       if (!ok) return;
@@ -273,7 +276,8 @@ export default function Home() {
 
   function showHoursTooltip() {
     setHoursTooltipOpen(true);
-    if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
+    if (hoursTooltipTimer.current)
+      window.clearTimeout(hoursTooltipTimer.current);
     hoursTooltipTimer.current = window.setTimeout(() => {
       setHoursTooltipOpen(false);
     }, 1600);
@@ -281,7 +285,8 @@ export default function Home() {
 
   React.useEffect(() => {
     return () => {
-      if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
+      if (hoursTooltipTimer.current)
+        window.clearTimeout(hoursTooltipTimer.current);
     };
   }, []);
 
@@ -306,14 +311,12 @@ export default function Home() {
       coreLevels,
       dsaConcepts,
       coreConcepts,
-
       conceptProfile,
     };
 
     saveProfile(payload);
-    console.log("Saved Profile:", payload);
-    console.log("User Profile:", conceptProfile);
-    alert("Saved. Check Console.");
+
+    navigate("/summary");
   }
 
   return (
@@ -548,8 +551,16 @@ export default function Home() {
                         <AnimatePresence>
                           {hoursTooltipOpen && (
                             <motion.div
-                              initial={{ opacity: 0, y: 6, filter: "blur(6px)" }}
-                              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                              initial={{
+                                opacity: 0,
+                                y: 6,
+                                filter: "blur(6px)",
+                              }}
+                              animate={{
+                                opacity: 1,
+                                y: 0,
+                                filter: "blur(0px)",
+                              }}
                               exit={{ opacity: 0, y: 6, filter: "blur(6px)" }}
                               transition={{
                                 duration: 0.22,
@@ -613,7 +624,10 @@ export default function Home() {
                     <button className={buttonGhost} onClick={back}>
                       Back
                     </button>
-                    <button className={buttonPrimary} onClick={() => void next()}>
+                    <button
+                      className={buttonPrimary}
+                      onClick={() => void next()}
+                    >
                       Next
                     </button>
                   </div>
