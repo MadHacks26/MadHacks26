@@ -28,27 +28,27 @@ You know the following about the candidate
 
 ```
 {
-  "dsa_topics": [
-    "<topic_1> <score_1>",
-    "<topic_2> <score_2>",
-    "<topic_3> <score_3>",
-    "<topic_4> <score_4>",
-    "<topic_5> <score_5>",
-    "<topic_6> <score_6>",
-    "<topic_7> <score_7>",
-    "<topic_8> <score_8>",
-    "<topic_9> <score_9>",
-    "<topic_10> <score_10>"
-  ],
-  "core_fundamentals": [
-    "<fundamental_1> <score_1>",
-    "<fundamental_2> <score_2>",
-    "<fundamental_3> <score_3>",
-    "<fundamental_4> <score_4>",
-    "<fundamental_5> <score_5>"
-    "<fundamental_6> <score_6>"
-    "<fundamental_7> <score_1>"
- ]
+  "dsa_topics": {
+    "<topic_1>": <score_1>,
+    "<topic_2>": <score_2>,
+    "<topic_3>": <score_3>,
+    "<topic_4>": <score_4>,
+    "<topic_5>": <score_5>,
+    "<topic_6>": <score_6>,
+    "<topic_7>": <score_7>,
+    "<topic_8>": <score_8>,
+    "<topic_9>": <score_9>,
+    "<topic_10>": <score_10>
+  },
+  "core_fundamentals": {
+    "<fundamental_1>": <score_1>,
+    "<fundamental_2>": <score_2>,
+    "<fundamental_3>": <score_3>,
+    "<fundamental_4>": <score_4>,
+    "<fundamental_5>": <score_5>,
+    "<fundamental_6>": <score_6>,
+    "<fundamental_7>": <score_7>,
+  }
 }
 ```
 
@@ -62,27 +62,27 @@ You know the following about the candidate
 
 ```json
 {
-  "dsa_topics": [
-    "arrays 10",
-    "two pointers 9",
-    "graphs 7",
-    "trees 7",
-    "dynamic programming 7",
-    "hash maps 5",
-    "sliding window 2",
-    "backtracking 1",
-    "binary search 1",
-    "linked lists 1"
-  ],
-  "core_fundamentals": [
-    "Operating Systems 6",
-    "Database Management Systems 5",
-    "High-Level Design 5",
-    "Networking 3",
-    "Concurrency and Multithreading 2",
-    "Distributed Systems 2",
-    "Object-Oriented Design 1"
-  ]
+  "dsa_topics": {
+    "arrays": 10,
+    "two pointers": 9,
+    "graphs": 7,
+    "trees": 7,
+    "dynamic programming": 7,
+    "hash maps": 5,
+    "sliding window": 2,
+    "backtracking": 1,
+    "binary search": 1,
+    "linked lists": 1
+  },
+  "core_fundamentals": {
+    "Operating Systems": 6,
+    "Database Management Systems": 5,
+    "High-Level Design": 5,
+    "Networking": 3,
+    "Concurrency and Multithreading": 2,
+    "Distributed Systems": 2,
+    "Object-Oriented Design": 1
+  }
 }
 ```
 
