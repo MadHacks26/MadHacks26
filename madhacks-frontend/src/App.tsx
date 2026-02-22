@@ -3,7 +3,8 @@ import Home from "./pages/Home";
 import Summary from "./pages/Summary.tsx";
 import Dashboard from "./pages/Dashboard";
 import MockInterview from "./pages/MockInterview";
-import MockPrepScreen from "./pages/MockPrepScreen.tsx";
+import MockPrepScreen from "./pages/Mockprepscreen.tsx";
+import FeedbackScreen from "./pages/FeedbackScreen.tsx";
 
 
 export default function App() {
@@ -14,7 +15,8 @@ export default function App() {
         <Route path="/summary" element={<Summary />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/mock-interview" element={<MockPrepScreen />} />
-        <Route path="/mock-interview/session" element={<MockInterview />} />
+        <Route path="/mock-interview/session" element={<MockInterview />} />b 
+        <Route path="/mock-feedback"   element={<FeedbackScreen />} />
 
       </Routes>
     </BrowserRouter>
