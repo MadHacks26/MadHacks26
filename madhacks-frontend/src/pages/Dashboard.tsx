@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth";
 import { loadChecks, saveChecks, makeTaskKey } from "../lib/roadmapStore";
 
 const ROADMAP_KEY = "madhacks_roadmap_data_v1";
@@ -128,6 +129,7 @@ function isDayDone(day: RoadmapDay, checks: Record<string, boolean>) {
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [days, setDays] = React.useState<RoadmapDay[]>([]);
   const [checks, setChecks] = React.useState<Record<string, boolean>>({});
   const [error, setError] = React.useState<string | null>(null);
@@ -176,6 +178,18 @@ export default function Dashboard() {
 
   return (
     <div className={pageWrap}>
+      <header className="sticky top-0 z-10 flex items-center justify-end border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+        <button
+          type="button"
+          className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
+          onClick={async () => {
+            await logout();
+            navigate("/auth");
+          }}
+        >
+          Logout
+        </button>
+      </header>
       <div className={container}>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
