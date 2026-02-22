@@ -2,6 +2,7 @@
 // Handles: Gemini question gen → ElevenLabs TTS → Browser STT transcription
 import { loadRoadmapMeta } from "./roadmapStore";
 
+
 const GEMINI_KEY          = import.meta.env.VITE_GEMINI_KEY          as string;
 const ELEVENLABS_KEY      = import.meta.env.VITE_ELEVENLABS_KEY      as string;
 const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID as string ; // "Sarah" default
@@ -40,18 +41,16 @@ const ROLE = meta?.role ?? "Software Engineer";
 export async function generateAllQuestions(
   totalQuestions: number = 5
 ): Promise<QuestionItem[]> {
-  const prompt = `You are a senior ${ROLE} at ${COMPANY} conducting a technical mock interview.
+  const prompt = `You are a senior interviewer at ${COMPANY} for the role of ${ROLE}.
 
-Generate exactly ${totalQuestions} interview questions for a candidate applying to the role of ${ROLE} at ${COMPANY}.
+Based on your experience, generate the **top 5 technical interview questions** a candidate applying to ${ROLE} at ${COMPANY} is most likely to face.
 
 Rules:
-- Each question must cover a DIFFERENT topic
-- Rotate across these topics: Arrays/HashMaps, Two Pointers/Sliding Window, Trees/Graphs, Dynamic Programming, System Design basics, OOP concepts, Complexity analysis
-- Questions 1 through ${totalQuestions - 1} should be medium difficulty
-- Question ${totalQuestions} (the last one) should be slightly harder
-- Each question should be answerable verbally in 2-3 minutes
+- Each question must cover a **different key concept or skill** relevant to the role.
+- Questions should be **medium difficulty**, except the last question, which should be **slightly harder**.
+- Each question should be **answerable verbally in 2-3 minutes**.
+- Provide only a **valid JSON array** in the following format:
 
-Respond ONLY with a valid JSON array (no markdown, no backticks, no extra text whatsoever):
 [
   {"question": "...", "topic": "..."},
   {"question": "...", "topic": "..."},
@@ -59,7 +58,6 @@ Respond ONLY with a valid JSON array (no markdown, no backticks, no extra text w
   {"question": "...", "topic": "..."},
   {"question": "...", "topic": "..."}
 ]`;
-
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${GEMINI_KEY}`,
@@ -97,7 +95,7 @@ export async function generateFeedback(pairs: QAPair[]): Promise<FeedbackResult>
     .map((p, i) => `Q${i + 1} [${p.topic}]: ${p.question}\nAnswer: ${p.answer || "(no answer given)"}`)
     .join("\n\n");
 
-  const prompt = `You are a senior software engineer reviewing a technical interview.
+  const prompt = `You are a recruiter reviewing a technical interview.
 
 Here are the interview questions and the candidate's answers:
 ${pairsText}
