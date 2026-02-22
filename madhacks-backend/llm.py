@@ -9,8 +9,12 @@ from google.genai import types
 
 load_dotenv()
 
-def generate(job_description: str = "Software Engineer 1", api_key: str | None = None):
-    """Generate content using the streaming API with Google Search and types."""
+
+def generate(job_description: str = "Software Engineer 1", api_key: str | None = None) -> str:
+    """
+    Generate content using streaming API with Google Search + URL context.
+    Returns the full raw text from the model.
+    """
     key = api_key or os.environ.get("GEMINI_API_KEY")
     if not key:
         raise ValueError("Provide api_key or set GEMINI_API_KEY environment variable")
@@ -21,7 +25,7 @@ def generate(job_description: str = "Software Engineer 1", api_key: str | None =
         types.Content(
             role="user",
             parts=[types.Part.from_text(text=job_description)],
-        ),
+        )
     ]
     tools = [
         types.Tool(url_context=types.UrlContext()),
@@ -33,13 +37,15 @@ def generate(job_description: str = "Software Engineer 1", api_key: str | None =
     )
 
     start = time.perf_counter()
-    full_text = []
+    full_text: list[str] = []
+
     for chunk in client.models.generate_content_stream(
         model="gemini-flash-lite-latest",
         contents=contents,
         config=generate_content_config,
     ):
         if chunk.text:
+            # Keep printing for backend logs (optional)
             print(chunk.text, end="")
             full_text.append(chunk.text)
 
@@ -51,6 +57,12 @@ def generate(job_description: str = "Software Engineer 1", api_key: str | None =
 
 
 def _extract_json(text: str) -> dict:
+    """
+    Extract strict JSON from model output.
+    Handles:
+      - Pure JSON output
+      - Extra text around JSON (find first '{' and last '}')
+    """
     text = (text or "").strip()
 
     try:
@@ -88,7 +100,6 @@ def _parse_list_items_as_topic_score(items: list) -> dict[str, int]:
             if topic:
                 out[topic] = score
         else:
-            # If no score, default to 1
             out[s] = 1
     return out
 
@@ -106,13 +117,17 @@ def _coerce_topic_score_map(value) -> dict[str, int]:
             key = str(k).strip()
             if not key:
                 continue
-            num = int(v) if isinstance(v, (int, float)) and float(v).is_integer() else None
+
+            num: int | None = None
+            if isinstance(v, (int, float)) and float(v).is_integer():
+                num = int(v)
+
             if num is None:
-                # last resort: parse numeric from string
                 try:
                     num = int(str(v).strip())
                 except Exception:
                     num = 1
+
             out[key] = num
         return out
 
@@ -139,10 +154,12 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
 
     job_description_text = job_description_text.replace("{{company_name}}", company_name)
     job_description_text = job_description_text.replace("{{job_role}}", job_role)
-    job_description_text = job_description_text.replace("{{job_link}}", job_link)
+    job_description_text = job_description_text.replace("{{job_link}}", job_link or "")
+
     out = generate(job_description=job_description_text)
     data = _extract_json(out)
 
+    # IMPORTANT: your model returns keys dsa_topics / core_fundamentals
     if "dsa_topics" not in data or "core_fundamentals" not in data:
         raise ValueError(
             "Invalid JSON shape. Expected keys: dsa_topics, core_fundamentals.\n"
@@ -151,7 +168,7 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
 
     dsa_map = _coerce_topic_score_map(data.get("dsa_topics"))
     core_map = _coerce_topic_score_map(data.get("core_fundamentals"))
-    # Keep insertion order as returned by model
+
     dsa_map = dict(list(dsa_map.items())[:10])
     core_map = dict(list(core_map.items())[:10])
 
@@ -160,35 +177,72 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
 
     return {"dsaConcepts": dsa_map, "coreConcepts": core_map}
 
-def generate_roadmap(job_description: str = "Software Engineer 1", api_key: str | None = None):
-    """Generate roadmap using the streaming API with Google Search and types."""
-    print("--- Generate --- roadmapq")
-    company_name = "Qualcomm"
-    job_role = "Software Engineering Intern"
-    job_link = "https://www.qualcomm.com/careers/students/internships"
-    total_prep_days = 7
-    daily_hours = 2
 
-    dsa_topics = {"arrays" : {"importance": 7, "confidence": 3}, "stacks": {"importance": 5, "confidence": 2}, "queues": {"importance": 4, "confidence": 7}, "trees": {"importance": 2, "confidence": 3}, "graphs": {"importance": 3, "confidence": 8}, "sorting": {"importance": 5, "confidence": 7}, "hashing": {"importance": 4, "confidence": 4}, "dynamic programming": {"importance": 3, "confidence": 2}, "backtracking": {"importance": 2, "confidence": 8}, "greedy": {"importance": 1, "confidence": 6}, "divide and conquer": {"importance": 1, "confidence": 3}}
-    core_fundamentals = {"OS": {"importance": 7, "confidence": 3}, "DBMS": {"importance": 3, "confidence": 8}, "LLD": {"importance": 4, "confidence": 7}, "Networking": {"importance": 2, "confidence": 3}, "Concurrency and Multithreading": {"importance": 3, "confidence": 8}, "Distributed Systems": {"importance": 2, "confidence": 3}}
-    
-    with open("roadmap.md", "r", encoding="utf-8") as f:
-        job_description_text = f.read()
-    # print(job_description_text)
-    job_description_text = job_description_text.replace("{{company_name}}", company_name)
-    job_description_text = job_description_text.replace("{{job_role}}", job_role)
-    job_description_text = job_description_text.replace("{{job_link}}", job_link)
-    job_description_text = job_description_text.replace("{{dsa_topics}}", json.dumps(dsa_topics))
-    job_description_text = job_description_text.replace("{{core_fundamentals}}", json.dumps(core_fundamentals))
-    job_description_text = job_description_text.replace("{{total_prep_days}}", str(total_prep_days))
-    job_description_text = job_description_text.replace("{{daily_hours}}", str(daily_hours))
-    generate(job_description=job_description_text)
+def generate_roadmap_from_profile(
+    company_name: str,
+    job_role: str,
+    job_link: str,
+    total_prep_days: int,
+    daily_hours: float,
+    dsa_topics: dict,
+    core_fundamentals: dict,
+) -> dict:
+    """
+    Reads roadmap.md, fills placeholders, calls generate(),
+    returns parsed JSON:
+    {
+      company, role, total_days, daily_hours,
+      roadmap: [...],
+      summary: {...}
+    }
+    """
+    here = os.path.dirname(os.path.abspath(__file__))
+    roadmap_path = os.path.join(here, "roadmap.md")
+
+    with open(roadmap_path, "r", encoding="utf-8") as f:
+        prompt = f.read()
+
+    prompt = prompt.replace("{{company_name}}", company_name)
+    prompt = prompt.replace("{{job_role}}", job_role)
+    prompt = prompt.replace("{{job_link}}", job_link or "")
+    prompt = prompt.replace("{{dsa_topics}}", json.dumps(dsa_topics))
+    prompt = prompt.replace("{{core_fundamentals}}", json.dumps(core_fundamentals))
+    prompt = prompt.replace("{{total_prep_days}}", str(total_prep_days))
+    prompt = prompt.replace("{{daily_hours}}", str(daily_hours))
+
+    out = generate(job_description=prompt)
+    data = _extract_json(out)
+
+    if not isinstance(data, dict):
+        raise ValueError("Roadmap generation did not return an object")
+
+    if "roadmap" not in data or "summary" not in data:
+        raise ValueError(
+            "Invalid roadmap JSON shape. Expected keys: roadmap, summary.\n"
+            f"Raw output:\n{out}"
+        )
+
+    if not isinstance(data["roadmap"], list):
+        raise ValueError("Invalid roadmap: 'roadmap' must be a list")
+
+    s = data["summary"]
+    if not isinstance(s, dict):
+        raise ValueError("Invalid summary: must be an object")
+
+    if "major_focus_areas" not in s or not isinstance(s["major_focus_areas"], dict):
+        raise ValueError("Invalid summary.major_focus_areas: must be an object")
+
+    if "total_study_resources" not in s or "total_leetcode_problems" not in s:
+        raise ValueError("Invalid summary totals")
+
+    return data
+
 
 if __name__ == "__main__":
-    print("--- Generate ---")
+    # Simple manual test
     company_name = "Qualcomm"
     job_role = "Software Engineering Intern"
     job_link = "https://www.qualcomm.com/careers/students/internships"
+
     print("\n--- Parsed Concepts ---")
     print(generate_concepts_from_prompt(company_name, job_role, job_link))
-    generate_roadmap()
