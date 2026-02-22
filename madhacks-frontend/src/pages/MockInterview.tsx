@@ -307,7 +307,7 @@ export default function MockInterview() {
           {/* <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-sm font-semibold ${banner.cls}`}>
             {banner.spin
               ? <span className="animate-spin-slow inline-block">⟳</span>
-              : <span>{phase === "speaking" ? "🔊" : phase === "listening" ? "🎙️" : "✅"}</span>
+              : <span>{phase === "speaking" ? "speaker" : phase === "listening" ? "mic" : "success"}</span>
             }
             <span>{error || banner.text}</span>
           </div> */}

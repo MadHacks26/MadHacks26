@@ -7,7 +7,6 @@ export default function AppBackground({
 }) {
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-[#090b10]">
-      {/* Content */}
       <div className="relative">{children}</div>
     </div>
   );

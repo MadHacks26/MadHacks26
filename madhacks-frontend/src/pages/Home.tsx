@@ -211,7 +211,6 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Loading skeleton */}
         {fetching && roadmaps.length === 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[0, 1, 2].map((i) => (
@@ -227,7 +226,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Cards from DB */}
         {roadmaps.length > 0 && (
           <div className="flex flex-col gap-3">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -239,9 +237,8 @@ export default function Home() {
                     key={rm.id}
                     onMouseEnter={() => setHoveredId(rm.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    className="relative overflow-hidden rounded-2xl border border-[#202026] bg-[#090b10] p-5 flex flex-col gap-4 transition-all hover:border-[#7aecc4]/20 hover:shadow-[0_0_0_2px_rgba(122,236,196,0.25),0_0_24px_rgba(122,236,196,0.10)]"
+                    className="relative h-full overflow-hidden rounded-2xl border border-[#202026] bg-[#090b10] p-5 flex flex-col gap-4 transition-all hover:border-[#7aecc4]/20 hover:shadow-[0_0_0_2px_rgba(122,236,196,0.25),0_0_24px_rgba(122,236,196,0.10)]"
                   >
-                    {/* Hover spread effect */}
                     <AnimatePresence>
                       {hovered && (
                         <motion.div
@@ -269,7 +266,6 @@ export default function Home() {
                     </AnimatePresence>
                     <div className="absolute inset-0 z-0 pointer-events-none [mask-image:radial-gradient(240px_at_center,white,transparent)] bg-black/40" />
 
-                    {/* Content */}
                     <div className="relative z-10 flex flex-col gap-4">
                       <div className="flex flex-col gap-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -291,10 +287,9 @@ export default function Home() {
                         )}
                       </div>
 
-                      {/* View button (previous formatting: w-fit, right aligned) */}
                       <button
                         onClick={() => handleView(rm)}
-                        className="inline-flex w-fit items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99] self-end"
+                        className="mt-auto inline-flex w-fit items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99] self-end"
                       >
                         View
                       </button>
