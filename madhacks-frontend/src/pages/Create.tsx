@@ -48,7 +48,7 @@ const buttonGhost =
 
 const stepVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(4px)" },
-  animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+  animate: { opacity: 1, y: 0,  filter: "blur(0px)" },
   exit:    { opacity: 0, y: -10, filter: "blur(4px)" },
 };
 
@@ -72,11 +72,17 @@ function buildConceptProfile(params: {
   const { dsaConcepts, dsaLevels, coreConcepts, coreLevels, defaultConfidence = 5 } = params;
   const dsa_topics: ConceptProfile["dsa_topics"] = {};
   for (const [topic, importance] of Object.entries(dsaConcepts)) {
-    dsa_topics[topic] = { importance: Number(importance), confidence: typeof dsaLevels[topic] === "number" ? dsaLevels[topic] : defaultConfidence };
+    dsa_topics[topic] = {
+      importance: Number(importance),
+      confidence: typeof dsaLevels[topic] === "number" ? dsaLevels[topic] : defaultConfidence,
+    };
   }
   const core_fundamentals: ConceptProfile["core_fundamentals"] = {};
   for (const [topic, importance] of Object.entries(coreConcepts)) {
-    core_fundamentals[topic] = { importance: Number(importance), confidence: typeof coreLevels[topic] === "number" ? coreLevels[topic] : defaultConfidence };
+    core_fundamentals[topic] = {
+      importance: Number(importance),
+      confidence: typeof coreLevels[topic] === "number" ? coreLevels[topic] : defaultConfidence,
+    };
   }
   return { dsa_topics, core_fundamentals };
 }
@@ -113,11 +119,14 @@ export default function Create() {
     "Big-O Complexity": 1, Recursion: 1, "Sorting & Searching": 1, "Bit Manipulation": 1,
   });
 
-  // Background fetch state — promise stored in ref so it's stable across renders
   const conceptsPromiseRef = React.useRef<Promise<boolean> | null>(null);
   const [conceptsReady,   setConceptsReady]   = React.useState(false);
   const [conceptsLoading, setConceptsLoading] = React.useState(false);
   const [conceptsError,   setConceptsError]   = React.useState<string | null>(null);
+
+  // "hidden" = no overlay | "visible" = faded in + spinner | "fading-out" = opacity going to 0
+  const [overlayVisible, setOverlayVisible] = React.useState(false);
+  const [overlayLabel,   setOverlayLabel]   = React.useState("Tailoring your concepts…");
 
   const [roadmapLoading, setRoadmapLoading] = React.useState(false);
   const [roadmapError,   setRoadmapError]   = React.useState<string | null>(null);
@@ -137,8 +146,12 @@ export default function Create() {
   );
 
   React.useEffect(() => { setName(user?.displayName ?? ""); });
-  React.useEffect(() => { setDsaLevels((prev) => syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5)); }, [dsaConcepts]);
-  React.useEffect(() => { setCoreLevels((prev) => syncLevelsFromKeys(Object.keys(coreConcepts), prev, 5)); }, [coreConcepts]);
+  React.useEffect(() => {
+    setDsaLevels((prev) => syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5));
+  }, [dsaConcepts]);
+  React.useEffect(() => {
+    setCoreLevels((prev) => syncLevelsFromKeys(Object.keys(coreConcepts), prev, 5));
+  }, [coreConcepts]);
 
   const safeName = clampName(name);
 
@@ -147,9 +160,8 @@ export default function Create() {
     (step === 2 && parsePositiveInt(prepDays) !== null && parseHours(hoursPerDay) !== null) ||
     step === 3 || step === 4;
 
-  // ── Fire concept fetch in background, return the promise ──────────────
+  // ── Fire concepts fetch in background ─────────────────────────────────
   function startConceptsFetch(): Promise<boolean> {
-    // Don't re-fire if already in-flight or done
     if (conceptsPromiseRef.current) return conceptsPromiseRef.current;
 
     setConceptsLoading(true);
@@ -165,10 +177,10 @@ export default function Create() {
         if (!r.ok) throw new Error(await r.text());
         const data = (await r.json()) as Partial<ConceptsResponse>;
 
-        if (!data.dsaConcepts || typeof data.dsaConcepts !== "object" || Array.isArray(data.dsaConcepts) ||
-            !data.coreConcepts || typeof data.coreConcepts !== "object" || Array.isArray(data.coreConcepts)) {
-          throw new Error("Backend returned invalid concept format");
-        }
+        if (
+          !data.dsaConcepts || typeof data.dsaConcepts !== "object" || Array.isArray(data.dsaConcepts) ||
+          !data.coreConcepts || typeof data.coreConcepts !== "object" || Array.isArray(data.coreConcepts)
+        ) throw new Error("Backend returned invalid concept format");
 
         const cleanDsa: Record<string, number> = {};
         for (const [k, v] of Object.entries(data.dsaConcepts)) {
@@ -180,19 +192,18 @@ export default function Create() {
           const key = String(k).trim(); if (!key) continue;
           const num = Number(v); if (Number.isFinite(num)) cleanCore[key] = num;
         }
-        if (!Object.keys(cleanDsa).length || !Object.keys(cleanCore).length) {
+        if (!Object.keys(cleanDsa).length || !Object.keys(cleanCore).length)
           throw new Error("Backend returned empty concepts");
-        }
 
         setDsaConcepts(cleanDsa);
         setCoreConcepts(cleanCore);
         setConceptsReady(true);
-        return true;
+        return true as boolean;
       })
       .catch((e: any) => {
         setConceptsError(e?.message ?? "Failed to generate concepts");
-        conceptsPromiseRef.current = null; // allow retry
-        return false;
+        conceptsPromiseRef.current = null;
+        return false as boolean;
       })
       .finally(() => setConceptsLoading(false));
 
@@ -200,22 +211,38 @@ export default function Create() {
     return promise;
   }
 
-  // ── Step 1 → 2: fire fetch in background, advance immediately ─────────
+  // ── Navigation ────────────────────────────────────────────────────────
   async function next() {
     if (!canGoNext) return;
 
     if (step === 1) {
-      startConceptsFetch(); // fire and forget
+      startConceptsFetch(); // fire and forget — runs in background
       setStep(2);
       return;
     }
 
     if (step === 2) {
-      // Block until concepts are ready before moving to step 3
-      if (conceptsPromiseRef.current && !conceptsReady) {
-        const ok = await conceptsPromiseRef.current;
-        if (!ok) return; // error shown, stay on step 2
+      // Already ready — skip overlay entirely
+      if (conceptsReady) {
+        setStep(3);
+        return;
       }
+
+      // Still loading — show overlay, wait, then fade out and advance
+      setOverlayLabel("Tailoring your concepts…");
+      setOverlayVisible(true);
+      const ok = await (conceptsPromiseRef.current ?? Promise.resolve(false));
+
+      if (!ok) {
+        // Error — hide overlay and stay on step 2
+        setOverlayVisible(false);
+        return;
+      }
+
+      // Fade out the overlay (CSS transition handles the animation)
+      setOverlayVisible(false);
+      // Small delay to let the fade-out complete before switching step
+      await new Promise((res) => setTimeout(res, 400));
       setStep(3);
       return;
     }
@@ -225,7 +252,6 @@ export default function Create() {
 
   function back() {
     if (step === 2) {
-      // Reset so user can change role/company and re-trigger
       conceptsPromiseRef.current = null;
       setConceptsReady(false);
       setConceptsError(null);
@@ -257,10 +283,12 @@ export default function Create() {
     return () => { if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current); };
   }, []);
 
-  // ── Generate: wait for concepts if still in-flight, then call /api/roadmap ──
+  // ── Generate roadmap ──────────────────────────────────────────────────
   async function finish() {
     setRoadmapLoading(true);
     setRoadmapError(null);
+    setOverlayLabel("Building your roadmap…");
+    setOverlayVisible(true);
 
     const prepDaysNum = parsePositiveInt(prepDays);
     const hoursNum    = Number(hoursPerDay);
@@ -270,7 +298,6 @@ export default function Create() {
       return;
     }
 
-    // If concepts are still loading, wait for them now (usually already done)
     if (conceptsPromiseRef.current && !conceptsReady) {
       const ok = await conceptsPromiseRef.current;
       if (!ok) {
@@ -293,7 +320,8 @@ export default function Create() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           role: payload.role, company: payload.company, jobLink: payload.jobLink,
-          prepDays: payload.prepDays, hoursPerDay: payload.hoursPerDay, conceptProfile: payload.conceptProfile,
+          prepDays: payload.prepDays, hoursPerDay: payload.hoursPerDay,
+          conceptProfile: payload.conceptProfile,
         }),
       });
       if (!r.ok) throw new Error(await r.text());
@@ -311,6 +339,7 @@ export default function Create() {
       }
       navigate("/summary");
     } catch (e: any) {
+      setOverlayVisible(false);
       setRoadmapError(e?.message ?? "Failed to generate roadmap");
     } finally {
       setRoadmapLoading(false);
@@ -320,7 +349,48 @@ export default function Create() {
   const stepLabels = ["Role & Company", "Schedule", "DSA Proficiency", "Core Fundamentals"];
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="relative min-h-screen bg-black text-white">
+
+      {/* ── Concepts loading overlay ───────────────────────────────────────
+           Sits on top of everything. Fades in when step 2 Next is clicked
+           while concepts are still generating. Fades out once they're done.
+      ── */}
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-black pointer-events-none"
+        style={{
+          opacity: overlayVisible ? 1 : 0,
+          transition: "opacity 0.4s ease",
+          pointerEvents: overlayVisible ? "all" : "none",
+        }}
+      >
+        {/* Spinner */}
+        <div
+          className="w-12 h-12 rounded-full border-2 border-[#7aecc4]/15 border-t-[#7aecc4]"
+          style={{ animation: "spin 0.9s linear infinite" }}
+        />
+        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-widest">
+          {overlayLabel}
+        </p>
+
+        {/* Error state inside overlay */}
+        {conceptsError && (
+          <div className="mt-2 flex flex-col items-center gap-3">
+            <p className="text-sm text-red-400">{conceptsError}</p>
+            <button
+              className="inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-800"
+              onClick={() => {
+                conceptsPromiseRef.current = null;
+                setOverlayVisible(false);
+              }}
+            >
+              Go back
+            </button>
+          </div>
+        )}
+      </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+
       <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
 
         {/* ── Top bar ── */}
@@ -360,17 +430,6 @@ export default function Create() {
 
         {/* ── Card ── */}
         <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] overflow-hidden">
-
-          {/* Subtle loading bar at top of card when concepts are fetching in background */}
-          <div className="h-[2px] w-full bg-[#202026] overflow-hidden">
-            {conceptsLoading && (
-              <div className="h-full bg-[#7aecc4]/60 animate-pulse w-full" />
-            )}
-            {conceptsReady && !conceptsLoading && (
-              <div className="h-full bg-[#7aecc4] w-full transition-all duration-500" />
-            )}
-          </div>
-
           <div className="p-6 sm:p-8">
             <AnimatePresence mode="wait">
 
@@ -415,14 +474,13 @@ export default function Create() {
                   <h2 className="text-xl font-bold text-white">Let's set your pace</h2>
                   <p className="mt-1 text-sm text-neutral-400">We'll generate a plan that fits your schedule.</p>
 
-                  {/* Concepts error banner (non-blocking) */}
-                  {conceptsError && (
+                  {conceptsError && !overlayVisible && (
                     <div className="mt-4 flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-red-600/20 bg-red-600/5 text-sm text-red-400">
-                      <span>⚠</span>
-                      <span>{conceptsError} — </span>
-                      <button className="underline font-semibold" onClick={() => { conceptsPromiseRef.current = null; startConceptsFetch(); }}>
-                        Retry
-                      </button>
+                      <span>⚠ {conceptsError} —</span>
+                      <button className="underline font-semibold" onClick={() => {
+                        conceptsPromiseRef.current = null;
+                        startConceptsFetch();
+                      }}>Retry</button>
                     </div>
                   )}
 
@@ -478,7 +536,7 @@ export default function Create() {
                   <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={back}>Back</button>
                     <button className={buttonPrimary} onClick={() => void next()} disabled={!canGoNext}>
-                      {conceptsLoading ? "Waiting for concepts…" : "Next →"}
+                      Next →
                     </button>
                   </div>
                 </motion.div>
@@ -529,11 +587,7 @@ export default function Create() {
                       <button className={buttonGhost} onClick={() => setStep(1)} disabled={roadmapLoading}>Reset</button>
                     </div>
                     <button className={buttonPrimary} onClick={finish} disabled={roadmapLoading}>
-                      {roadmapLoading
-                        ? "Generating…"
-                        : conceptsLoading
-                        ? "Finalising concepts…"
-                        : "Generate →"}
+                      {roadmapLoading ? "Generating…" : "Generate →"}
                     </button>
                   </div>
                 </motion.div>
