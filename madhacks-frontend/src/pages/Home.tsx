@@ -120,6 +120,7 @@ function buildConceptProfile(params: {
 export default function Home() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  console.log(user)
   const [step, setStep] = React.useState<Step>(1);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({

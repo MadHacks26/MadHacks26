@@ -36,24 +36,14 @@ def generate(job_description: str = "Software Engineer 1", api_key: str | None =
         tools=tools,
     )
 
-    start = time.perf_counter()
-    full_text: list[str] = []
-
-    for chunk in client.models.generate_content_stream(
-        model="gemini-3-flash-preview",
+    response = client.models.generate_content(
+        model="gemini-flash-latest",
         contents=contents,
         config=generate_content_config,
-    ):
-        if chunk.text:
-            # Keep printing for backend logs (optional)
-            print(chunk.text, end="")
-            full_text.append(chunk.text)
+    )
+    print(response.text)
 
-    elapsed = time.perf_counter() - start
-    timestamp = datetime.now().isoformat()
-    print(f"\n[{timestamp}] elapsed: {elapsed:.3f}s")
-
-    return "".join(full_text)
+    return response.text
 
 
 def _extract_json(text: str) -> dict:
