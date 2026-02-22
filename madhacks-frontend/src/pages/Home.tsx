@@ -54,7 +54,7 @@ function coerceCards(userId: string, payload: any): RoadmapCard[] {
     .map(([company, obj]) => {
       const role = String(obj?.role || "").trim();
       return {
-        id: company, 
+        id: company,
         company: String(obj?.company || company).trim() || company,
         role: role || "Unknown Role",
         createdAt: extractCreatedAt(obj),
@@ -127,10 +127,8 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <p className="text-sm font-semibold text-neutral-600 uppercase tracking-wide">
-          Loading…
-        </p>
+      <div className="min-h-screen flex items-center justify-center bg-[#090b10]">
+        <div className="w-20 h-20 border-4 border-[#7aecc4] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
