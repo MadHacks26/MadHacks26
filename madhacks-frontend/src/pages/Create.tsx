@@ -167,7 +167,7 @@ export default function Create() {
 
   const conceptsPromiseRef = React.useRef<Promise<boolean> | null>(null);
   const [conceptsReady, setConceptsReady] = React.useState(false);
-  const [conceptsLoading, setConceptsLoading] = React.useState(false);
+  const [, setConceptsLoading] = React.useState(false);
   const [conceptsError, setConceptsError] = React.useState<string | null>(null);
 
   const [overlayVisible, setOverlayVisible] = React.useState(false);
