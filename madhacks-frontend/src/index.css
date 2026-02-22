@@ -1,3 +1,72 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer utilities {
+  /* Webkit browsers (Chrome, Safari, Edge) */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #7aecc4;
+    border-radius: 9999px;
+    box-shadow: 0 0 8px rgba(122, 236, 196, 0.4);
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #8ff5d1;
+    box-shadow: 0 0 12px rgba(122, 236, 196, 0.7);
+  }
+
+  /* Firefox */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #7aecc4 transparent;
+  }
+}
+
+.slider-white {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    border-radius: 9999px;
+    background: #1f2937; /* dark track */
+    outline: none;
+  }
+  
+  /* Chrome / Edge / Safari */
+  .slider-white::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 15px;
+    width: 15px;
+    background: #ffffff;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  
+  .slider-white::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+  }
+  
+  /* Firefox */
+  .slider-white::-moz-range-thumb {
+    height: 18px;
+    width: 18px;
+    border-radius: 9999px;
+    background: #ffffff;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    cursor: pointer;
+  }
+
+  

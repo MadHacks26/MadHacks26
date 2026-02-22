@@ -22,7 +22,7 @@ function clampName(name: string) {
 function syncLevelsFromKeys(
   keys: string[],
   prev: Record<string, number>,
-  defaultValue = 4
+  defaultValue = 5
 ) {
   const next: Record<string, number> = {};
   for (const k of keys) {
@@ -48,19 +48,18 @@ function parseHours(s: string) {
   return n;
 }
 
-const pageWrap =
-  "min-h-screen bg-neutral-50 text-neutral-900 selection:bg-neutral-900 selection:text-white";
+const pageWrap = "min-h-screen";
 const container = "mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14";
-const card = "rounded-2xl border border-neutral-200 bg-white shadow-sm";
+const card = "rounded-2xl border-2 border-[#202026] bg-[#000000] shadow-sm";
 
 const inputBase =
-  "w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 outline-none transition focus:border-neutral-900 focus:ring-2 focus:ring-neutral-900/10";
+  "w-full rounded-xl border border-neutral-700 bg-black px-4 py-3 text-sm text-white placeholder:text-neutral-400 outline-none transition focus:border-neutral-500 focus:ring-2 focus:ring-neutral-900/10";
 
 const buttonPrimary =
-  "inline-flex items-center justify-center rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-neutral-300";
+  "inline-flex items-center justify-center rounded-xl bg-[#7aecc4] text-black px-5 py-3 text-sm font-semibold tracking-wide transition hover:bg-white hover:text-black active:scale-[0.99] disabled:text-white disabled:cursor-not-allowed disabled:bg-[#1c2b2b]";
 
 const buttonGhost =
-  "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-[0.99]";
+  "inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-3 text-sm font-semibold transition hover:bg-neutral-50 hover:text-black active:scale-[0.99]";
 
 const stepVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(4px)" },
@@ -90,7 +89,7 @@ function buildConceptProfile(params: {
     dsaLevels,
     coreConcepts,
     coreLevels,
-    defaultConfidence = 4,
+    defaultConfidence = 5,
   } = params;
 
   const dsa_topics: ConceptProfile["dsa_topics"] = {};
@@ -155,11 +154,11 @@ export default function Home() {
   const [hoursPerDay, setHoursPerDay] = React.useState<string>("");
 
   const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>(() =>
-    Object.fromEntries(Object.keys(dsaConcepts).map((c) => [c, 4]))
+    Object.fromEntries(Object.keys(dsaConcepts).map((c) => [c, 5]))
   );
 
   const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(
-    () => Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 4]))
+    () => Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 5]))
   );
 
   React.useEffect(() => {
@@ -167,13 +166,13 @@ export default function Home() {
   })
   React.useEffect(() => {
     setDsaLevels((prev) =>
-      syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 4)
+      syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5)
     );
   }, [dsaConcepts]);
 
   React.useEffect(() => {
     setCoreLevels((prev) =>
-      syncLevelsFromKeys(Object.keys(coreConcepts), prev, 4)
+      syncLevelsFromKeys(Object.keys(coreConcepts), prev, 5)
     );
   }, [coreConcepts]);
 
@@ -394,10 +393,10 @@ export default function Home() {
       <div className={container}>
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-              Sexy title
+            <h1 className="mt-2 text-2xl font-semibold tracking-normal sm:text-3xl text-[#7aecc4]">
+              SEXY TITLE
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-neutral-600">
+            <p className="mt-2 max-w-2xl text-sm text-[#FAF9F6]">
               One line description
             </p>
           </div>
@@ -412,10 +411,10 @@ export default function Home() {
                   className={[
                     "h-2.5 w-10 rounded-full transition",
                     done
-                      ? "bg-neutral-900"
+                      ? "bg-[#2e4f49]"
                       : active
-                      ? "bg-neutral-700"
-                      : "bg-neutral-200",
+                      ? "bg-[#7aecc4]"
+                      : "bg-[#FAF9F6]",
                   ].join(" ")}
                 />
               );
@@ -435,12 +434,12 @@ export default function Home() {
                   exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <h2 className="text-lg font-semibold">
+                  <h2 className="text-lg font-semibold text-[#7aecc4]">
                     First, what do we call you?
                   </h2>
 
-                  <div className="mt-2 grid gap-3 sm:max-w-md">
-                    <label className="text-xs font-medium text-neutral-600">
+                  <div className="mt-2 grid gap-3 sm:max-w-md tracking-wide uppercase">
+                    <label className="text-xs font-medium text-[#FAF9F6]">
                       Name
                     </label>
                     <input
@@ -475,16 +474,16 @@ export default function Home() {
                   exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <h2 className="text-lg font-semibold">
-                    Hey{safeName ? `, ${safeName}` : ""} 👋
+                  <h2 className="text-lg font-semibold text-[#7aecc4]">
+                    Hey{safeName ? `, ${safeName}` : ""}!
                   </h2>
-                  <p className="mt-1 text-sm text-neutral-600">
+                  <p className="mt-1 text-sm text-white">
                     What role are you aiming for, and where?
                   </p>
 
-                  <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     <div className="grid gap-2">
-                      <label className="text-xs font-medium text-neutral-600">
+                      <label className="text-[0.7rem] font-medium tracking-wide text-white uppercase">
                         Job role
                       </label>
                       <input
@@ -498,7 +497,7 @@ export default function Home() {
                     </div>
 
                     <div className="grid gap-2">
-                      <label className="text-xs font-medium text-neutral-600">
+                      <label className="text-[0.7rem] font-medium tracking-wide text-white uppercase">
                         Company
                       </label>
                       <input
@@ -511,7 +510,7 @@ export default function Home() {
                     </div>
 
                     <div className="grid gap-2 sm:col-span-2">
-                      <label className="text-xs font-medium text-neutral-600">
+                      <label className="text-[0.7rem] font-medium tracking-wide text-white uppercase">
                         Job posting link
                       </label>
                       <input
@@ -529,10 +528,7 @@ export default function Home() {
                     <p className="mt-4 text-sm text-red-600">{conceptsError}</p>
                   )}
 
-                  <div className="mt-8 flex items-center justify-end ">
-                    {/* <button className={buttonGhost} onClick={back}>
-                      Back
-                    </button> */}
+                  <div className="mt-8 flex justify-end">
                     <button
                       className={buttonPrimary}
                       onClick={() => void next()}
@@ -553,22 +549,24 @@ export default function Home() {
                   exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <h2 className="text-lg font-semibold">Let’s set your pace</h2>
-                  <p className="mt-1 text-sm text-neutral-600">
+                  <h2 className="text-lg font-semibold text-[#7aecc4]">
+                    Let’s set your pace
+                  </h2>
+                  <p className="mt-1 text-sm text-white">
                     We’ll generate a plan that fits your schedule.
                   </p>
 
-                  <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-xl border border-neutral-200 bg-white p-4">
-                      <label className="text-xs font-medium text-neutral-600">
-                        How many days do you have to prep?
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    <div className="rounded-xl border-2 border-[#202026] bg-[#090b10] p-4">
+                      <label className="text-[0.7rem] font-medium tracking-wide text-white uppercase">
+                        Prep Days
                       </label>
 
                       <div className="mt-3">
                         <input
                           inputMode="numeric"
                           pattern="[0-9]*"
-                          placeholder="e.g., 14"
+                          placeholder="How many days do you have to prep?"
                           value={prepDays}
                           onKeyDown={onEnterNext}
                           onChange={(e) => {
@@ -580,15 +578,15 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-neutral-200 bg-white p-4">
-                      <label className="text-xs font-medium text-neutral-600">
-                        Hours per day you can commit
+                    <div className="rounded-xl border-2 border-[#202026] bg-[#090b10] p-4">
+                      <label className="text-[0.7rem] font-medium tracking-wide text-white uppercase">
+                        Daily Hours
                       </label>
 
                       <div className="mt-3 relative">
                         <input
                           inputMode="decimal"
-                          placeholder="e.g., 2 or 1.5"
+                          placeholder="How many hours per day can you commit?"
                           value={hoursPerDay}
                           onKeyDown={onEnterNext}
                           onChange={(e) => {
@@ -672,17 +670,19 @@ export default function Home() {
                   exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <h2 className="text-lg font-semibold">DSA comfort check</h2>
-                  <p className="mt-1 text-sm text-neutral-600">
+                  <h2 className="text-lg font-semibold text-[#7aecc4]">
+                  DSA Proficiency
+                  </h2>
+                  <p className="mt-1 text-sm text-white">
                     Slide honestly. This only helps your plan adapt.
                   </p>
 
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2 ">
                     {Object.entries(dsaConcepts).map(([topic]) => (
                       <LevelSlider
                         key={topic}
                         label={topic}
-                        value={dsaLevels[topic] ?? 4}
+                        value={dsaLevels[topic] ?? 5}
                         onChange={(v) => setSlider("dsa", topic, v)}
                         leftLabel="Weak"
                         rightLabel="Strong"
@@ -713,8 +713,10 @@ export default function Home() {
                   exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  <h2 className="text-lg font-semibold">Core fundamentals</h2>
-                  <p className="mt-1 text-sm text-neutral-600">
+                  <h2 className="text-lg font-semibold text-[#7aecc4]">
+                    Core Fundamentals
+                  </h2>
+                  <p className="mt-1 text-sm text-white">
                     This helps us tune prep beyond just LeetCode.
                   </p>
 
@@ -723,7 +725,7 @@ export default function Home() {
                       <LevelSlider
                         key={topic}
                         label={topic}
-                        value={coreLevels[topic] ?? 4}
+                        value={coreLevels[topic] ?? 5}
                         onChange={(v) => setSlider("core", topic, v)}
                         leftLabel="Weak"
                         rightLabel="Strong"
@@ -736,10 +738,10 @@ export default function Home() {
                   )}
 
                   <div className="mt-8 flex items-center justify-between">
-                    <button className={buttonGhost} onClick={back}>
-                      Back
-                    </button>
                     <div className="flex items-center gap-3">
+                      <button className={buttonGhost} onClick={back}>
+                        Back
+                      </button>
                       <button
                         className={buttonGhost}
                         onClick={() => setStep(1)}
@@ -748,25 +750,25 @@ export default function Home() {
                       >
                         Reset
                       </button>
-                      <button
-                        className={buttonPrimary}
-                        onClick={finish}
-                        disabled={roadmapLoading}
-                      >
-                        {roadmapLoading ? "Building..." : "Build my roadmap"}
-                      </button>
                     </div>
+                    <button
+                      className={buttonPrimary}
+                      onClick={finish}
+                      disabled={roadmapLoading}
+                    >
+                      {roadmapLoading ? "Generating..." : "Generate"}
+                    </button>
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
           </div>
 
-          <div className="flex items-center justify-between border-t border-neutral-200 bg-neutral-50 px-5 py-4 text-xs text-neutral-500 sm:px-7">
+          <div className="rounded-bl-2xl rounded-br-2xl flex items-center justify-between border-t border-[#7aecc4] bg-[#000000] px-5 py-4 text-xs text-[#FAF9F6] sm:px-7">
             <p>
               Step{" "}
-              <span className="font-semibold text-neutral-700">{step}</span>{" "}
-              of <span className="font-semibold text-neutral-700">4</span>
+              <span className="font-semibold text-[#FAF9F6]">{step}</span>{" "}
+              of <span className="font-semibold text-[#FAF9F6]">4</span>
             </p>
           </div>
         </div>

@@ -1,57 +1,47 @@
+// src/pages/Auth.tsx
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
+import BackgroundCircles from "@/components/BackgroundCircles";
+import { EncryptedText } from "@/components/ui/encrypted-text";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
 const pageWrap =
-  "min-h-screen bg-neutral-50 text-neutral-900 selection:bg-neutral-900 selection:text-white flex flex-col items-center justify-center px-4";
-const card =
-  "w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-8 shadow-sm";
+  "relative min-h-screen bg-[#090b10] flex flex-col items-center justify-center px-4 overflow-hidden";
+
 const buttonPrimary =
-  "inline-flex w-full items-center justify-center gap-2 rounded-xl bg-neutral-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-neutral-800 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60";
-const buttonGhost =
-  "inline-flex w-full items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-[0.99]";
+  "inline-flex w-fit items-center justify-center gap-2 rounded-xl bg-[#7aecc4] text-black px-5 py-3 text-sm font-semibold transition hover:bg-white active:scale-[0.99] disabled:cursor-not-allowed";
 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, loading, error, isConfigured, login, logout } = useAuth();
   const [submitLoading, setSubmitLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!loading && user) {
-  //     // navigate("/", { replace: true });
-        // logout().then(() => {})
-    }
-  }, [user, loading, navigate]);
-
   const handleGoogleSignIn = async () => {
     setSubmitLoading(true);
     try {
       const cred = await login();
-      const user = cred.user;
-      await fetch(`${API_BASE}/api/auth`, {
+      const u = cred.user;
+
+      const res = await fetch(`${API_BASE}/api/auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          user_id: user.uid,
-          user_name: user.displayName || user.email || "User",
-          email: user.email || "",
-        })
-      }).then(async function(response) {
-        console.log(response.status);
-        if(response.status == 200) {
-          navigate("/", { replace: true });
-        }
-        else {
-          await logout();
-          setSubmitLoading(false);
-        }
+          user_id: u.uid,
+          user_name: u.displayName || u.email || "User",
+          email: u.email || "",
+        }),
       });
+
+      if (res.status === 200) {
+        navigate("/", { replace: true });
+      } else {
+        await logout();
+      }
     } catch {
-      console.log("Error connecting to server!!")
+      console.log("Error connecting to server!!");
       await logout();
-      // error is set in context
     } finally {
       setSubmitLoading(false);
     }
@@ -60,31 +50,24 @@ export default function Auth() {
   if (loading) {
     return (
       <div className={pageWrap}>
-        <div className="text-sm text-neutral-500">Loading…</div>
+        <BackgroundCircles />
+        <div className="relative z-10 text-sm text-neutral-400">Loading…</div>
       </div>
     );
   }
 
-  if (user) {
-    return null;
-  }
+  if (user) return null;
 
   if (!isConfigured) {
     return (
       <div className={pageWrap}>
-        <div className={card}>
-          <h1 className="text-xl font-bold text-neutral-900">Auth</h1>
-          <p className="mt-2 text-sm text-neutral-500">
+        <BackgroundCircles />
+        <div className="relative z-10 max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+          <h1 className="text-xl font-bold text-white">Auth</h1>
+          <p className="mt-2 text-sm text-neutral-300">
             Firebase Auth is not configured. Add VITE_FIREBASE_* env variables
             to enable login.
           </p>
-          {/* <button
-            type="button"
-            className={`${buttonGhost} mt-6`}
-            onClick={() => navigate("/")}
-          >
-            Back to home
-          </button> */}
         </div>
       </div>
     );
@@ -92,18 +75,26 @@ export default function Auth() {
 
   return (
     <div className={pageWrap}>
-      <div className={card}>
-        <h1 className="text-xl font-bold text-neutral-900">Sign in</h1>
-        <p className="mt-1 text-sm text-neutral-500">
-          Sign in with your Google account to continue.
-        </p>
+      <BackgroundCircles />
 
-        <div className="mt-6 space-y-4">
+      <div className="relative z-10 w-full max-w-md">
+        <h1 className="text-3xl font-bold text-white text-center">
+          <EncryptedText
+            text="Jarson.ai"
+            revealDelayMs={70}
+            flipDelayMs={25}
+            encryptedClassName="text-white/40 font-mono"
+            revealedClassName="text-white"
+          />
+        </h1>
+
+        <div className="mt-8 space-y-4 flex flex-col items-center">
           {error && (
-            <p className="text-sm text-red-600" role="alert">
+            <p className="text-sm text-red-400 text-center" role="alert">
               {error}
             </p>
           )}
+
           <button
             type="button"
             className={buttonPrimary}
@@ -132,14 +123,6 @@ export default function Auth() {
           </button>
         </div>
       </div>
-
-      {/* <button
-        type="button"
-        className={`${buttonGhost} mt-4 max-w-md`}
-        onClick={() => navigate("/")}
-      >
-        Back to home
-      </button> */}
     </div>
   );
 }
