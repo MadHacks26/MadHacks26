@@ -140,12 +140,6 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
     job_description_text = job_description_text.replace("{{company_name}}", company_name)
     job_description_text = job_description_text.replace("{{job_role}}", job_role)
     job_description_text = job_description_text.replace("{{job_link}}", job_link)
-    job_description_text = job_description_text.replace("{{dsa_topics}}", dsa_topics)
-    job_description_text = job_description_text.replace("{{core_fundamentals}}", core_fundamentals)
-    job_description_text = job_description_text.replace("{{total_prep_days}}", total_prep_days)
-    job_description_text = job_description_text.replace("{{daily_hours}}", daily_hours)
-    generate(job_description=job_description_text)
-
     out = generate(job_description=job_description_text)
     data = _extract_json(out)
 
@@ -166,6 +160,29 @@ def generate_concepts_from_prompt(company_name: str, job_role: str, job_link: st
 
     return {"dsaConcepts": dsa_map, "coreConcepts": core_map}
 
+def generate_roadmap(job_description: str = "Software Engineer 1", api_key: str | None = None):
+    """Generate roadmap using the streaming API with Google Search and types."""
+    print("--- Generate --- roadmapq")
+    company_name = "Qualcomm"
+    job_role = "Software Engineering Intern"
+    job_link = "https://www.qualcomm.com/careers/students/internships"
+    total_prep_days = 7
+    daily_hours = 2
+
+    dsa_topics = {"arrays" : {"importance": 7, "confidence": 3}, "stacks": {"importance": 5, "confidence": 2}, "queues": {"importance": 4, "confidence": 7}, "trees": {"importance": 2, "confidence": 3}, "graphs": {"importance": 3, "confidence": 8}, "sorting": {"importance": 5, "confidence": 7}, "hashing": {"importance": 4, "confidence": 4}, "dynamic programming": {"importance": 3, "confidence": 2}, "backtracking": {"importance": 2, "confidence": 8}, "greedy": {"importance": 1, "confidence": 6}, "divide and conquer": {"importance": 1, "confidence": 3}}
+    core_fundamentals = {"OS": {"importance": 7, "confidence": 3}, "DBMS": {"importance": 3, "confidence": 8}, "LLD": {"importance": 4, "confidence": 7}, "Networking": {"importance": 2, "confidence": 3}, "Concurrency and Multithreading": {"importance": 3, "confidence": 8}, "Distributed Systems": {"importance": 2, "confidence": 3}}
+    
+    with open("roadmap.md", "r", encoding="utf-8") as f:
+        job_description_text = f.read()
+    # print(job_description_text)
+    job_description_text = job_description_text.replace("{{company_name}}", company_name)
+    job_description_text = job_description_text.replace("{{job_role}}", job_role)
+    job_description_text = job_description_text.replace("{{job_link}}", job_link)
+    job_description_text = job_description_text.replace("{{dsa_topics}}", json.dumps(dsa_topics))
+    job_description_text = job_description_text.replace("{{core_fundamentals}}", json.dumps(core_fundamentals))
+    job_description_text = job_description_text.replace("{{total_prep_days}}", str(total_prep_days))
+    job_description_text = job_description_text.replace("{{daily_hours}}", str(daily_hours))
+    generate(job_description=job_description_text)
 
 if __name__ == "__main__":
     print("--- Generate ---")
@@ -174,3 +191,4 @@ if __name__ == "__main__":
     job_link = "https://www.qualcomm.com/careers/students/internships"
     print("\n--- Parsed Concepts ---")
     print(generate_concepts_from_prompt(company_name, job_role, job_link))
+    generate_roadmap()
