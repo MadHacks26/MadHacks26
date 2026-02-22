@@ -21,14 +21,14 @@ type RoadmapDay = {
   checklist?: RoadmapChecklistItem[];
 };
 
-type RoadmapObjectShape = {
-  company?: string;
-  role?: string;
-  total_days?: number;
-  daily_hours?: number;
-  roadmap?: RoadmapDay[];
-  summary?: any;
-};
+// type RoadmapObjectShape = {
+//   company?: string;
+//   role?: string;
+//   total_days?: number;
+//   daily_hours?: number;
+//   roadmap?: RoadmapDay[];
+//   summary?: any;
+// };
 
 const pageWrap =
   "min-h-screen bg-neutral-50 text-neutral-900 selection:bg-neutral-900 selection:text-white";
