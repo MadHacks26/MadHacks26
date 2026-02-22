@@ -1,5 +1,6 @@
 // ─── interviewEngine.ts ───────────────────────────────────────────────────
 // Handles: Gemini question gen → ElevenLabs TTS → Browser STT transcription
+import { loadRoadmapMeta } from "./roadmapStore";
 
 const GEMINI_KEY          = import.meta.env.VITE_GEMINI_KEY          as string;
 const ELEVENLABS_KEY      = import.meta.env.VITE_ELEVENLABS_KEY      as string;
@@ -32,13 +33,16 @@ export interface FeedbackResult {
 }
 
 // ─── Gemini: Generate ALL questions in ONE call ───────────────────────────
+const meta = loadRoadmapMeta();
+const COMPANY = meta?.company ?? "a well-known tech company";
+const ROLE = meta?.role ?? "Software Engineer";
 
 export async function generateAllQuestions(
   totalQuestions: number = 5
 ): Promise<QuestionItem[]> {
-  const prompt = `You are a senior software engineer conducting a technical mock interview.
+  const prompt = `You are a senior ${ROLE} at ${COMPANY} conducting a technical mock interview.
 
-Generate exactly ${totalQuestions} interview questions for a mid-level software engineer.
+Generate exactly ${totalQuestions} interview questions for a candidate applying to the role of ${ROLE} at ${COMPANY}.
 
 Rules:
 - Each question must cover a DIFFERENT topic
@@ -55,6 +59,7 @@ Respond ONLY with a valid JSON array (no markdown, no backticks, no extra text w
   {"question": "...", "topic": "..."},
   {"question": "...", "topic": "..."}
 ]`;
+
 
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${GEMINI_KEY}`,

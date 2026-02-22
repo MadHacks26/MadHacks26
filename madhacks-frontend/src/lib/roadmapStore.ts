@@ -25,11 +25,18 @@ export function saveRoadmapData(payload: RoadmapPayload) {
   localStorage.setItem(ROADMAP_DATA_KEY, JSON.stringify(payload));
 }
 
-export function loadRoadmapData(): RoadmapPayload | null {
+export function loadRoadmapMeta() {
+  const raw = localStorage.getItem(ROADMAP_DATA_KEY);
+  if (!raw) return null;
+
   try {
-    const raw = localStorage.getItem(ROADMAP_DATA_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw) as RoadmapPayload;
+    const parsed = JSON.parse(raw);
+    return {
+      company: parsed.company ?? null,
+      role: parsed.role ?? null,
+      total_days: parsed.total_days ?? null,
+      daily_hours: parsed.daily_hours ?? null,
+    };
   } catch {
     return null;
   }
