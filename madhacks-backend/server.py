@@ -1,5 +1,5 @@
 from typing import Dict, Optional
-
+import os
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -7,6 +7,16 @@ from pydantic import BaseModel, Field
 from llm import generate_concepts_from_prompt, generate_roadmap_from_profile
 
 app = FastAPI()
+
+default_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+extra = os.getenv("ALLOWED_ORIGINS", "")
+extra_origins = [o.strip() for o in extra.split(",") if o.strip()]
+
+allow_origins = default_origins + extra_origins
 
 app.add_middleware(
     CORSMiddleware,
