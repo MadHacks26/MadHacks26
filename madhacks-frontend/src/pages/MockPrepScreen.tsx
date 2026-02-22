@@ -57,7 +57,7 @@ export default function MockPrepScreen() {
 
   const [checks, setChecks] = React.useState<Check[]>([
     { id: "mic",     icon: "🎙️", name: "Microphone",    sub: "Click to test",          status: "idle" },
-    { id: "cam",     icon: "📷", name: "Camera",         sub: "Click to preview",       status: "idle" },
+    // { id: "cam",     icon: "📷", name: "Camera",         sub: "Click to preview",       status: "idle" },
     { id: "browser", icon: "🌐", name: "Browser compat", sub: "Checking…",              status: "idle" },
     { id: "network", icon: "📶", name: "Network",        sub: "Checking connectivity…", status: "idle" },
   ]);
@@ -127,34 +127,34 @@ export default function MockPrepScreen() {
     }
   }
 
-  async function toggleCamera() {
-    if (camEnabled) {
-      streamRef.current?.getVideoTracks().forEach((t) => t.stop());
-      if (videoRef.current) videoRef.current.srcObject = null;
-      setCamEnabled(false);
-      updateCheck("cam", "idle", "Click to preview");
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: selectedCam ? { deviceId: { exact: selectedCam } } : true,
-        audio: false,
-      });
-      if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
-      setCamEnabled(true);
-      updateCheck("cam", "ok", "Camera active");
+  // async function toggleCamera() {
+  //   if (camEnabled) {
+  //     streamRef.current?.getVideoTracks().forEach((t) => t.stop());
+  //     if (videoRef.current) videoRef.current.srcObject = null;
+  //     setCamEnabled(false);
+  //     updateCheck("cam", "idle", "Click to preview");
+  //     return;
+  //   }
+  //   try {
+  //     const stream = await navigator.mediaDevices.getUserMedia({
+  //       video: selectedCam ? { deviceId: { exact: selectedCam } } : true,
+  //       audio: false,
+  //     });
+      // if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
+      // setCamEnabled(true);
+      // updateCheck("cam", "ok", "Camera active");
 
-      const devs = await navigator.mediaDevices.enumerateDevices();
-      setCamDevices(devs.filter((d) => d.kind === "videoinput"));
-      setMicDevices(devs.filter((d) => d.kind === "audioinput"));
-    } catch {
-      updateCheck("cam", "err", "Permission denied");
-    }
-  }
+  //     const devs = await navigator.mediaDevices.enumerateDevices();
+  //     // setCamDevices(devs.filter((d) => d.kind === "videoinput"));
+  //     setMicDevices(devs.filter((d) => d.kind === "audioinput"));
+  //   } catch {
+  //     updateCheck("cam", "err", "Permission denied");
+  //   }
+  // }
 
   function handleCheckClick(id: string) {
     if (id === "mic") toggleMic();
-    if (id === "cam") toggleCamera();
+    // if (id === "cam") toggleCamera();
   }
 
   const isReady   = checks.every((c) => c.status === "ok" || c.status === "warn");
@@ -220,10 +220,10 @@ export default function MockPrepScreen() {
           {/* LEFT — Camera + mic */}
           <div className="p-7 md:p-9">
             <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/30 mb-4">
-              Camera preview
+              Microphone Test
             </div>
 
-            {/* Camera box */}
+            {/* Camera box
             <div className="relative w-full aspect-[16/10] rounded-2xl bg-[#0e0e18] border border-neutral-700/35 overflow-hidden flex items-center justify-center flex-col gap-2.5">
               {!camEnabled && (
                 <div className="flex flex-col items-center gap-2.5 pointer-events-none">
@@ -245,7 +245,7 @@ export default function MockPrepScreen() {
               <div className="absolute bottom-2.5 left-2.5 font-mono text-[10px] px-2.5 py-1 rounded-lg bg-black/60 border border-neutral-700/35 text-white/50 tracking-[0.06em]">
                 {camEnabled ? "● Live" : "Paused"}
               </div>
-            </div>
+            </div> */}
 
             {/* Mic visualiser */}
             <div className="mt-4 h-8 flex items-end justify-center gap-1">
@@ -269,7 +269,7 @@ export default function MockPrepScreen() {
             <div className="flex flex-col gap-2.5 mt-5">
               {[
                 { label: "Microphone", value: selectedMic, setter: setSelectedMic, devices: micDevices, defaultLabel: "Default microphone" },
-                { label: "Camera",     value: selectedCam, setter: setSelectedCam, devices: camDevices, defaultLabel: "Default camera" },
+                // { label: "Camera",     value: selectedCam, setter: setSelectedCam, devices: camDevices, defaultLabel: "Default camera" },
               ].map((row) => (
                 <div key={row.label} className="flex flex-col gap-1">
                   <div className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/30">{row.label}</div>
@@ -364,7 +364,7 @@ export default function MockPrepScreen() {
           <span>
             {isReady
               ? "All checks passed — you're good to go!"
-              : "Enable your mic and camera, then verify all checks are green before proceeding."}
+              : "Enable your mic, then verify all checks are green before proceeding."}
           </span>
         </div>
 
@@ -375,7 +375,7 @@ export default function MockPrepScreen() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => navigate("/roadmap")}
               className="font-mono text-[11px] tracking-[0.08em] uppercase px-5 py-2.5 rounded-xl border border-neutral-700/50 bg-transparent text-white/40 cursor-pointer transition-all hover:border-neutral-700/60 hover:text-white/70 hover:bg-neutral-800/50"
             >
               Cancel

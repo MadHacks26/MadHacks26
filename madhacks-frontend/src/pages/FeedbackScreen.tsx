@@ -196,7 +196,7 @@ export default function FeedbackScreen() {
 
           {/* Dashboard btn */}
           <button
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/roadmap")}
             className="font-mono text-[11px] tracking-[0.08em] uppercase px-[18px] py-2 rounded-[10px] border border-white/10 bg-transparent text-white/35 cursor-pointer transition-all hover:border-white/[0.22] hover:text-white/65"
           >
             Dashboard
@@ -365,7 +365,7 @@ export default function FeedbackScreen() {
                   Try again ↺
                 </button>
                 <button
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate("/roadmap")}
                   className="btn-primary-glow font-sora text-[13px] font-semibold px-7 py-3 rounded-[14px] border-0 text-[#07140f] cursor-pointer flex items-center gap-2"
                 >
                   Back to dashboard →
