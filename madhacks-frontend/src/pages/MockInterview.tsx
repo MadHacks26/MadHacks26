@@ -51,7 +51,7 @@ const styles = `
 `;
 
 type Phase = "generating" | "speaking" | "listening" | "processing" | "done";
-const TOTAL_QUESTIONS = 5;
+const TOTAL_QUESTIONS = 3;
 
 
 export default function MockInterview() {

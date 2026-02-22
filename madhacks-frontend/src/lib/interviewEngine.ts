@@ -38,7 +38,7 @@ const COMPANY = meta?.company ?? "a well-known tech company";
 const ROLE = meta?.role ?? "Software Engineer";
 
 export async function generateAllQuestions(
-  totalQuestions: number = 5
+  totalQuestions: number = 3
 ): Promise<QuestionItem[]> {
   const prompt = `You are a senior interviewer at ${COMPANY} for the role of ${ROLE}.
 
