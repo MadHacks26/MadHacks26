@@ -241,7 +241,7 @@ export default function MockInterview() {
   function exitSession() {
     cancelSpeech();
     sttRef.current?.stop();
-    navigate("/");
+    navigate("/mock-feedback");
   }
 
   React.useEffect(() => {
@@ -365,7 +365,7 @@ export default function MockInterview() {
                 onClick={handleDoneAnswering}
                 className={buttonPrimary}
               >
-                {qIndex + 1 >= TOTAL_QUESTIONS ? "Finish interview →" : "Done"}
+                {qIndex + 1 >= TOTAL_QUESTIONS ? "Done" : "Done"}
               </button>
 
               <button onClick={exitSession} className={buttonDanger}>
