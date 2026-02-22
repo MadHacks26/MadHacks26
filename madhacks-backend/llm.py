@@ -40,7 +40,7 @@ def generate(job_description: str = "Software Engineer 1", api_key: str | None =
     full_text: list[str] = []
 
     for chunk in client.models.generate_content_stream(
-        model="gemini-flash-lite-latest",
+        model="gemini-3-flash-preview",
         contents=contents,
         config=generate_content_config,
     ):
