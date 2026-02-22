@@ -10,9 +10,11 @@ from pydantic import BaseModel, Field
 from llm import generate_concepts_from_prompt, generate_roadmap_from_profile
 
 from auth import router as auth_router
+from routers.roadmap import router as roadmap_router
 
 app = FastAPI()
 app.include_router(auth_router)
+app.include_router(roadmap_router)
 
 default_origins = [
     "http://localhost:5173",
