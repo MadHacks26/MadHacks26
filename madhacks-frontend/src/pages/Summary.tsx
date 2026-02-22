@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth";
 
 const ROADMAP_KEY = "madhacks_roadmap_data_v1";
 
@@ -51,6 +52,7 @@ function initials(label: string) {
 
 export default function Summary() {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const [summary] = React.useState<SummaryShape>(() => {
     const stored = safeParseRoadmapSummary();
@@ -80,6 +82,18 @@ export default function Summary() {
 
   return (
     <div className={pageWrap}>
+      <header className="sticky top-0 z-10 flex items-center justify-end border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+        <button
+          type="button"
+          className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
+          onClick={async () => {
+            await logout();
+            navigate("/auth");
+          }}
+        >
+          Logout
+        </button>
+      </header>
       <div className={container}>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

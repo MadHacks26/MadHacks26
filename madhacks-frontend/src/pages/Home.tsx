@@ -121,6 +121,7 @@ function buildConceptProfile(params: {
 export default function Home() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  console.log(user)
   const [step, setStep] = React.useState<Step>(1);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
@@ -528,10 +529,10 @@ export default function Home() {
                     <p className="mt-4 text-sm text-red-600">{conceptsError}</p>
                   )}
 
-                  {/* <div className="mt-8 flex items-center justify-between">
-                    <button className={buttonGhost} onClick={back}>
+                  <div className="mt-8 flex items-center justify-end ">
+                    {/* <button className={buttonGhost} onClick={back}>
                       Back
-                    </button>
+                    </button> */}
                     <button
                       className={buttonPrimary}
                       onClick={() => void next()}
@@ -539,7 +540,7 @@ export default function Home() {
                     >
                       {conceptsLoading ? "Generating..." : "Next"}
                     </button>
-                  </div> */}
+                  </div>
                 </motion.div>
               )}
 
