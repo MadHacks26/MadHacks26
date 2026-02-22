@@ -6,6 +6,8 @@ import Roadmap from "./pages/Roadmap.tsx";
 import MockInterview from "./pages/MockInterview";
 import MockPrepScreen from "./pages/MockPrepScreen.tsx";
 import Auth from "./pages/Auth";
+import FeedbackScreen from "./pages/FeedbackScreen.tsx";
+
 import Home from "./pages/Home.tsx";
 
 export default function App() {
@@ -59,6 +61,13 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route 
+          path="/mock-feedback"   
+          element={
+          <ProtectedRoute>
+            <FeedbackScreen />
+            </ProtectedRoute>} />
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>

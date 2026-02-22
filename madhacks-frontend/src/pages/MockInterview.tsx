@@ -1,565 +1,422 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
 
-// ─── Styles ────────────────────────────────────────────────────────────────
+import {
+  generateAllQuestions,
+  type QuestionItem,
+  speakText,
+  createSTT,
+  type QAPair,
+} from "../lib/interviewEngine";
 
+// ─── Minimal style block: only what Tailwind can't express ────────────────
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;500;600;700&display=swap');
 
-  .mock-root {
-    min-height: 100vh;
-    background: #0a0a0f;
-    color: #e8e8f0;
-    font-family: 'DM Sans', sans-serif;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    overflow: hidden;
-  }
+  .font-sora  { font-family: 'Sora', sans-serif; }
+  .font-mono  { font-family: 'DM Mono', monospace; }
 
-  /* subtle grid overlay */
-  .mock-root::before {
+  /* Grid background */
+  .mi-grid-bg::before {
     content: '';
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
-    background-size: 48px 48px;
+      linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+    background-size: 52px 52px;
     pointer-events: none;
     z-index: 0;
   }
 
-  .mock-header {
-    position: relative;
-    z-index: 10;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 18px 32px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    background: rgba(10,10,15,0.85);
-    backdrop-filter: blur(12px);
-  }
-
-  .mock-logo {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-  }
-
-  .mock-logo span {
-    color: #7cf0c8;
-  }
-
-  .live-badge {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.5);
-  }
-
-  .live-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: #f87171;
-    animation: pulse-dot 1.8s ease-in-out infinite;
-  }
-
-  @keyframes pulse-dot {
-    0%, 100% { opacity: 1; transform: scale(1); }
-    50% { opacity: 0.4; transform: scale(0.7); }
-  }
-
-  .btn-back {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.1);
-    border-radius: 8px;
-    padding: 7px 16px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-back:hover {
-    color: rgba(255,255,255,0.7);
-    border-color: rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.04);
-  }
-
-  /* ── Main content ── */
-  .mock-body {
-    position: relative;
-    z-index: 1;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 32px;
-    max-width: 1100px;
-    width: 100%;
-    margin: 0 auto;
-    box-sizing: border-box;
-  }
-
-  /* ── Video grid ── */
-  .video-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-
-  @media (max-width: 700px) {
-    .video-grid { grid-template-columns: 1fr; }
-    .mock-body { padding: 16px; }
-  }
-
-  .video-card {
-    position: relative;
-    border-radius: 20px;
-    overflow: hidden;
-    aspect-ratio: 16 / 10;
-    background: #111118;
-    border: 1px solid rgba(255,255,255,0.07);
-    box-shadow: 0 0 0 0 rgba(124,240,200,0);
-    transition: box-shadow 0.4s;
-  }
-
-  .video-card.speaking {
-    box-shadow: 0 0 0 2px #7cf0c8, 0 0 32px 0 rgba(124,240,200,0.15);
-  }
-
-  /* avatar area */
-  .video-inner {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-  }
-
-  .avatar-ring {
-    width: 72px;
-    height: 72px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .avatar-ring.ai {
-    background: linear-gradient(135deg, #1a2a3a, #0d1f2d);
-    border: 2px solid rgba(124,240,200,0.3);
-  }
-
-  .avatar-ring.user {
-    background: linear-gradient(135deg, #1e1a2e, #120f20);
-    border: 2px solid rgba(167,139,250,0.3);
-  }
-
-  .avatar-icon {
-    font-size: 32px;
-    line-height: 1;
-    user-select: none;
-  }
-
-  /* speaking wave rings */
-  .ring-pulse {
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 1.5px solid;
-    opacity: 0;
-    transform: scale(0.9);
-  }
-
-  .speaking .ring-pulse.r1 {
+  /* Avatar rings animate only when parent card is .speaking */
+  .v-card.speaking .ring-pulse.r1 {
     border-color: rgba(124,240,200,0.5);
     animation: ring-expand 1.8s ease-out infinite;
   }
-  .speaking .ring-pulse.r2 {
+  .v-card.speaking .ring-pulse.r2 {
     border-color: rgba(124,240,200,0.3);
     animation: ring-expand 1.8s ease-out 0.5s infinite;
   }
-  .user-card.speaking .ring-pulse.r1 {
+  .v-card.user-card.speaking .ring-pulse.r1 {
     border-color: rgba(167,139,250,0.5);
     animation: ring-expand 1.8s ease-out infinite;
   }
-  .user-card.speaking .ring-pulse.r2 {
+  .v-card.user-card.speaking .ring-pulse.r2 {
     border-color: rgba(167,139,250,0.3);
     animation: ring-expand 1.8s ease-out 0.5s infinite;
   }
-
   @keyframes ring-expand {
-    0%   { opacity: 0.9; transform: scale(0.95); }
-    100% { opacity: 0;   transform: scale(1.6); }
+    0%   { opacity: .9; transform: scale(.95); }
+    100% { opacity: 0;  transform: scale(1.6); }
   }
 
-  .card-label {
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
+  @keyframes pulse-dot {
+    0%,100% { opacity:1; transform:scale(1); }
+    50%     { opacity:.4; transform:scale(.7); }
   }
-
-  /* corner name tag */
-  .name-tag {
-    position: absolute;
-    bottom: 14px;
-    left: 14px;
-    font-family: 'DM Mono', monospace;
-    font-size: 11px;
-    letter-spacing: 0.08em;
-    padding: 5px 12px;
-    border-radius: 8px;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.65);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .name-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* corner mic indicator */
-  .mic-tag {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.5);
-    backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.08);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-  }
-
-  /* ── Subtitle bar ── */
-  .subtitle-wrap {
-    position: relative;
-    border-radius: 16px;
-    background: #111118;
-    border: 1px solid rgba(255,255,255,0.07);
-    padding: 24px 28px;
-    min-height: 110px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    overflow: hidden;
-  }
-
-  .subtitle-wrap::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, #7cf0c8, #7c9df0, #c07cf0);
-    border-radius: 16px 16px 0 0;
-  }
-
-  .subtitle-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .subtitle-title {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: rgba(255,255,255,0.25);
-  }
-
-  .subtitle-speaker {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 20px;
-  }
-
-  .subtitle-speaker.ai {
-    color: #7cf0c8;
-    background: rgba(124,240,200,0.08);
-    border: 1px solid rgba(124,240,200,0.2);
-  }
-
-  .subtitle-speaker.user {
-    color: #a78bfa;
-    background: rgba(167,139,250,0.08);
-    border: 1px solid rgba(167,139,250,0.2);
-  }
-
-  .subtitle-text {
-    font-size: 16px;
-    font-weight: 400;
-    line-height: 1.6;
-    color: rgba(255,255,255,0.85);
-    min-height: 52px;
-    display: flex;
-    align-items: center;
-  }
-
-  .subtitle-text.idle {
-    color: rgba(255,255,255,0.2);
-    font-style: italic;
-    font-size: 14px;
-  }
-
-  /* typing cursor blink */
-  .cursor {
-    display: inline-block;
-    width: 2px;
-    height: 1em;
-    background: #7cf0c8;
-    margin-left: 3px;
-    vertical-align: middle;
-    border-radius: 1px;
-    animation: blink 1s step-end infinite;
-  }
+  .animate-pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
 
   @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0; }
+    0%,100% { opacity:1; }
+    50%     { opacity:0; }
+  }
+  .animate-blink { animation: blink 1s step-end infinite; }
+
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  .animate-spin-slow { animation: spin-slow 1s linear infinite; }
+
+  @keyframes fade-up {
+    from { opacity:0; transform:translateY(4px); }
+    to   { opacity:1; transform:none; }
+  }
+  .animate-fade-up { animation: fade-up 0.3s ease; }
+
+  @keyframes mic-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.3); }
+    50%     { box-shadow: 0 0 0 8px rgba(248,113,113,0); }
+  }
+  .animate-mic-pulse { animation: mic-pulse 1.2s ease-in-out infinite; }
+
+  /* Speaking glow borders */
+  .glow-ai   { box-shadow: 0 0 0 2px #7cf0c8, 0 0 28px rgba(124,240,200,0.12); }
+  .glow-user { box-shadow: 0 0 0 2px #a78bfa, 0 0 28px rgba(167,139,250,0.12); }
+
+  /* Subtitle top gradient bar */
+  .subtitle-bar::before {
+    content: '';
+    position: absolute; top:0; left:0; right:0; height:2px;
+    background: linear-gradient(90deg, #7cf0c8, #7c9df0, #c07cf0);
   }
 
-  /* ── Controls bar ── */
-  .controls {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding-bottom: 8px;
+  /* Progress gradient fill */
+  .progress-fill {
+    background: linear-gradient(90deg, #7cf0c8, #7c9df0);
+    transition: width 0.6s ease;
   }
 
-  .ctrl-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    cursor: pointer;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.05);
-    transition: all 0.2s;
-  }
-
-  .ctrl-btn:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: rgba(255,255,255,0.2);
-    transform: scale(1.07);
-  }
-
-  .ctrl-btn.end {
-    width: 56px;
-    height: 56px;
-    font-size: 20px;
-    background: rgba(248,113,113,0.15);
-    border-color: rgba(248,113,113,0.35);
-  }
-
-  .ctrl-btn.end:hover {
-    background: rgba(248,113,113,0.28);
-    border-color: rgba(248,113,113,0.6);
-  }
-
-  .ctrl-btn.muted {
-    background: rgba(248,113,113,0.1);
-    border-color: rgba(248,113,113,0.3);
-  }
+  /* AI avatar bg */
+  .avatar-ai   { background: linear-gradient(135deg,#1a2a3a,#0d1f2d); border: 2px solid rgba(124,240,200,0.3); }
+  .avatar-user { background: linear-gradient(135deg,#1e1a2e,#120f20); border: 2px solid rgba(167,139,250,0.3); }
 `;
 
-// ─── Demo subtitle lines ────────────────────────────────────────────────────
+// ─── Interview phases ──────────────────────────────────────────────────────
+type Phase = "generating" | "speaking" | "listening" | "processing" | "done";
+const TOTAL_QUESTIONS = 5;
 
-const DEMO_LINES = [
-  { speaker: "ai" as const,   text: "Let's start with something foundational — can you walk me through how you'd find the two numbers in an array that sum to a target?" },
-  { speaker: "user" as const, text: "Sure! I'd use a hashmap. For each number I check if the complement exists in the map, otherwise I store it." },
-  { speaker: "ai" as const,   text: "Nice. What's the time and space complexity of that approach?" },
-];
-
-// ─── Component ─────────────────────────────────────────────────────────────
-
+// ─── Component ────────────────────────────────────────────────────────────
 export default function MockInterview() {
   const navigate = useNavigate();
 
-  const [lineIdx, setLineIdx]       = React.useState(0);
-  const [displayed, setDisplayed]   = React.useState("");
-  const [typing, setTyping]         = React.useState(false);
+  const [phase, setPhase]           = React.useState<Phase>("generating");
+  const [questions, setQuestions]   = React.useState<QuestionItem[]>([]);
+  const [qIndex, setQIndex]         = React.useState(0);
+  const [history, setHistory]       = React.useState<QAPair[]>([]);
+  const [currentQ, setCurrentQ]     = React.useState<{ question: string; topic: string } | null>(null);
+  const [displayedQ, setDisplayedQ] = React.useState("");
+  const [typingQ, setTypingQ]       = React.useState(false);
+  const [liveTranscript, setLive]   = React.useState("");
+  const [finalAnswer, setFinal]     = React.useState("");
+  const [error, setError]           = React.useState<string | null>(null);
   const [muted, setMuted]           = React.useState(false);
-  const [videoOff, setVideoOff]     = React.useState(false);
 
-  const current = DEMO_LINES[lineIdx] ?? null;
-  const aiSpeaking   = typing && current?.speaker === "ai";
-  const userSpeaking = typing && current?.speaker === "user";
+  const sttRef       = React.useRef<{ start:()=>void; stop:()=>void } | null>(null);
+  const answerRef    = React.useRef("");
+  const questionsRef = React.useRef<QuestionItem[]>([]);
+  const userVideoRef = React.useRef<HTMLVideoElement>(null);       // ← camera
+  const camStreamRef = React.useRef<MediaStream | null>(null);    // ← camera
 
-  // typewriter effect cycling through demo lines
+  // ── Typewriter ──
   React.useEffect(() => {
-    const line = DEMO_LINES[lineIdx];
-    if (!line) return;
-
-    setDisplayed("");
-    setTyping(true);
-
+    if (!currentQ) return;
+    setDisplayedQ("");
+    setTypingQ(true);
     let i = 0;
     const iv = setInterval(() => {
       i++;
-      setDisplayed(line.text.slice(0, i));
-      if (i >= line.text.length) {
-        clearInterval(iv);
-        setTyping(false);
-        // pause then move to next
-        const t = setTimeout(() => {
-          setLineIdx((p) => (p + 1) % DEMO_LINES.length);
-        }, 2800);
-        return () => clearTimeout(t);
-      }
-    }, 28);
-
+      setDisplayedQ(currentQ.question.slice(0, i));
+      if (i >= currentQ.question.length) { clearInterval(iv); setTypingQ(false); }
+    }, 22);
     return () => clearInterval(iv);
-  }, [lineIdx]);
+  }, [currentQ]);
+
+  async function askQuestion(idx: number, qs: QuestionItem[]) {
+    const q = qs[idx];
+    if (!q) return;
+
+    setCurrentQ({ question: q.question, topic: q.topic });
+    setDisplayedQ("");
+    setLive("");
+    setFinal("");
+    setError(null);
+    answerRef.current = "";
+
+    try {
+      setPhase("speaking");
+      await speakText(q.question);
+
+      setPhase("listening");
+      sttRef.current = createSTT(
+        (text, isFinal) => {
+          if (isFinal) {
+            answerRef.current += (answerRef.current ? " " : "") + text;
+            setFinal(answerRef.current);
+            setLive("");
+          } else {
+            setLive(text);
+          }
+        },
+        () => {}
+      );
+      sttRef.current.start();
+    } catch (e: any) {
+      setError(e?.message ?? "Something went wrong");
+      setPhase("processing");
+    }
+  }
+
+  function handleDoneAnswering() {
+    sttRef.current?.stop();
+    const answer = answerRef.current.trim() || "(no answer)";
+    const updated: QAPair[] = [
+      ...history,
+      { question: currentQ!.question, topic: currentQ!.topic, answer },
+    ];
+    setHistory(updated);
+    setPhase("processing");
+
+    const nextIdx = qIndex + 1;
+    if (nextIdx >= questionsRef.current.length) {
+      setPhase("done");
+      setTimeout(() => navigate("/mock-feedback", { state: { history: updated } }), 800);
+    } else {
+      setQIndex(nextIdx);
+      setTimeout(() => askQuestion(nextIdx, questionsRef.current), 600);
+    }
+  }
+
+  const hasBooted = React.useRef(false);
+  React.useEffect(() => {
+    if (hasBooted.current) return;
+    hasBooted.current = true;
+
+    // ── Start camera (silent fallback if denied) ──
+    navigator.mediaDevices?.getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        camStreamRef.current = stream;
+        if (userVideoRef.current) {
+          userVideoRef.current.srcObject = stream;
+          userVideoRef.current.play();
+        }
+      })
+      .catch(() => {});
+
+    setPhase("generating");
+    generateAllQuestions(TOTAL_QUESTIONS)
+      .then((qs) => {
+        setQuestions(qs);
+        questionsRef.current = qs;
+        askQuestion(0, qs);
+      })
+      .catch((e: any) => {
+        setError(e?.message ?? "Failed to load questions");
+        setPhase("processing");
+      });
+    return () => {
+      sttRef.current?.stop();
+      camStreamRef.current?.getTracks().forEach((t) => t.stop());  // ← camera cleanup
+    };
+  }, []);
+
+  // ── Derived ──
+  const questionNumber = qIndex + 1;
+  const progressPct    = Math.round((qIndex / TOTAL_QUESTIONS) * 100);
+  const aiSpeaking     = phase === "speaking";
+  const userSpeaking   = phase === "listening";
+
+  function phaseLabel() {
+    if (phase === "generating")  return { cls: "loading",   icon: "⟳", text: "Loading all questions…" };
+    if (phase === "speaking")    return { cls: "speaking",  icon: "🔊", text: "AI is speaking…" };
+    if (phase === "listening")   return { cls: "listening", icon: "🎙️", text: "Recording your answer — click Done when finished" };
+    if (phase === "processing")  return { cls: "loading",   icon: "⟳", text: "Processing…" };
+    if (phase === "done")        return { cls: "done",       icon: "✅", text: "Interview complete! Generating feedback…" };
+    return null;
+  }
+
+  const banner = phaseLabel();
+
+  // Banner color map
+  const bannerColors: Record<string, string> = {
+    loading:   "bg-[rgba(124,140,240,0.07)] border-[rgba(124,140,240,0.2)] text-[rgba(124,140,240,0.85)]",
+    speaking:  "bg-[rgba(124,240,200,0.07)] border-[rgba(124,240,200,0.2)] text-[rgba(124,240,200,0.85)]",
+    listening: "bg-[rgba(248,113,113,0.07)] border-[rgba(248,113,113,0.2)] text-[rgba(248,113,113,0.85)]",
+    done:      "bg-[rgba(251,191,36,0.07)]  border-[rgba(251,191,36,0.2)]  text-[rgba(251,191,36,0.85)]",
+  };
 
   return (
     <>
       <style>{styles}</style>
-      <div className="mock-root">
-        {/* Header */}
-        <header className="mock-header">
-          <div className="mock-logo">prep<span>AI</span> · mock session</div>
-          <div className="live-badge">
-            <span className="live-dot" />
+
+      {/* Root */}
+      <div className="mi-grid-bg font-sora relative flex flex-col min-h-screen bg-[#0a0a0f] text-[#e8e8f0] overflow-hidden">
+
+        {/* ── Header ── */}
+        <header className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-7 py-4 border-b border-white/[0.06] bg-[rgba(10,10,15,0.9)] backdrop-blur-md">
+          {/* Logo */}
+          <div className="font-mono text-xs tracking-widest uppercase text-white/35">
+            prep<span className="text-[#7cf0c8] not-italic">AI</span> · interview
+          </div>
+
+          {/* Progress */}
+          <div className="flex items-center gap-2.5 flex-1 max-w-xs mx-auto">
+            <div className="flex-1 h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+              <div className="progress-fill h-full rounded-full" style={{ width: `${progressPct}%` }} />
+            </div>
+            <div className="font-mono text-[10px] text-white/30 tracking-wide whitespace-nowrap">
+              Q{Math.min(questionNumber, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
+            </div>
+          </div>
+
+          {/* Live badge */}
+          <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-wide uppercase text-white/40">
+            <span className="animate-pulse-dot w-[7px] h-[7px] rounded-full bg-red-400 inline-block" />
             Live
           </div>
-          <button className="btn-back" onClick={() => navigate("/dashboard")}>
+
+          {/* Exit */}
+          <button
+            onClick={() => { sttRef.current?.stop(); camStreamRef.current?.getTracks().forEach(t => t.stop()); navigate("/dashboard"); }}
+            className="font-mono text-[11px] tracking-wide uppercase px-4 py-[7px] rounded-lg border border-white/10 bg-transparent text-white/30 cursor-pointer transition-all hover:border-white/20 hover:text-white/60"
+          >
             ← Exit
           </button>
         </header>
 
-        {/* Body */}
-        <main className="mock-body">
+        {/* ── Body ── */}
+        <main className="relative z-[1] flex-1 flex flex-col gap-[18px] px-7 py-6 max-w-[1100px] w-full mx-auto">
 
-          {/* Video boxes */}
-          <div className="video-grid">
+          {/* ── Video row ── */}
+          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
 
             {/* AI card */}
-            <div className={`video-card ${aiSpeaking ? "speaking" : ""}`}>
-              <div className="video-inner">
-                <div className={`avatar-ring ai ${aiSpeaking ? "speaking" : ""}`}>
-                  <div className="ring-pulse r1" />
-                  <div className="ring-pulse r2" />
-                  <span className="avatar-icon">🤖</span>
+            <div className={`v-card relative rounded-[20px] overflow-hidden bg-[#0e0e18] border border-white/[0.07] aspect-[16/10] flex items-center justify-center transition-shadow duration-400 ${aiSpeaking ? "speaking glow-ai" : ""}`}>
+              <div className="flex flex-col items-center gap-3">
+                <div className={`avatar-ai relative w-[68px] h-[68px] rounded-full flex items-center justify-center text-[30px]`}>
+                  <div className="ring-pulse r1 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
+                  <div className="ring-pulse r2 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
+                  🤖
                 </div>
-                <span className="card-label">AI Interviewer</span>
+                <div className="font-mono text-[10px] tracking-widest uppercase text-white/30">AI Interviewer</div>
               </div>
-              <div className="name-tag">
-                <span className="name-dot" style={{ background: "#7cf0c8" }} />
+              {/* Nametag */}
+              <div className="absolute bottom-3 left-3 font-mono text-[10px] tracking-[0.07em] px-[11px] py-1 rounded-lg bg-black/60 backdrop-blur border border-white/[0.07] text-white/55 flex items-center gap-1.5">
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0 bg-[#7cf0c8]" />
                 Aria · AI
               </div>
-              <div className="mic-tag">🎙️</div>
+              {/* Status */}
+              <div className={`absolute top-3 right-3 font-mono text-[10px] px-2.5 py-1 rounded-full bg-black/55 border transition-all duration-300 tracking-[0.06em] ${aiSpeaking ? "text-[#7cf0c8] border-[rgba(124,240,200,0.3)]" : "border-white/[0.07] text-white/40"}`}>
+                {aiSpeaking ? "Speaking" : phase === "generating" ? "Thinking…" : "Idle"}
+              </div>
             </div>
 
-            {/* User card */}
-            <div className={`video-card user-card ${userSpeaking ? "speaking" : ""}`}>
-              <div className="video-inner">
-                {videoOff ? (
-                  <>
-                    <div className={`avatar-ring user ${userSpeaking ? "speaking" : ""}`}>
-                      <div className="ring-pulse r1" />
-                      <div className="ring-pulse r2" />
-                      <span className="avatar-icon">🧑‍💻</span>
-                    </div>
-                    <span className="card-label">Camera off</span>
-                  </>
-                ) : (
-                  <>
-                    <div className={`avatar-ring user ${userSpeaking ? "speaking" : ""}`}>
-                      <div className="ring-pulse r1" />
-                      <div className="ring-pulse r2" />
-                      <span className="avatar-icon">🧑‍💻</span>
-                    </div>
-                    <span className="card-label">You</span>
-                  </>
-                )}
-              </div>
-              <div className="name-tag">
-                <span className="name-dot" style={{ background: "#a78bfa" }} />
+            {/* User card — live camera feed */}
+            <div className={`v-card user-card relative rounded-[20px] overflow-hidden bg-[#0e0e18] border border-white/[0.07] aspect-[16/10] flex items-center justify-center transition-shadow duration-400 ${userSpeaking ? "speaking glow-user" : ""}`}>
+              {/* Live camera — fills the card */}
+              <video
+                ref={userVideoRef}
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Emoji fallback — sits behind video, visible only if camera denied
+              <div className="flex flex-col items-center gap-3 pointer-events-none">
+                <div className="avatar-user relative w-[68px] h-[68px] rounded-full flex items-center justify-center text-[30px]">
+                  <div className="ring-pulse r1 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
+                  <div className="ring-pulse r2 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
+                  🧑‍💻
+                </div>
+                <div className="font-mono text-[10px] tracking-widest uppercase text-white/30">You</div>
+              </div> */}
+              {/* Nametag */}
+              <div className="absolute bottom-3 left-3 font-mono text-[10px] tracking-[0.07em] px-[11px] py-1 rounded-lg bg-black/60 backdrop-blur border border-white/[0.07] text-white/55 flex items-center gap-1.5">
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0 bg-[#a78bfa]" />
                 You
               </div>
-              <div className="mic-tag">{muted ? "🔇" : "🎤"}</div>
+              {/* Status */}
+              <div className={`absolute top-3 right-3 font-mono text-[10px] px-2.5 py-1 rounded-full bg-black/55 border transition-all duration-300 tracking-[0.06em] ${userSpeaking ? "text-red-400 border-red-400/30" : "border-white/[0.07] text-white/40"}`}>
+                {userSpeaking ? "● Recording" : "Waiting"}
+              </div>
             </div>
           </div>
 
-          {/* Subtitle bar */}
-          <div className="subtitle-wrap">
-            <div className="subtitle-header">
-              <span className="subtitle-title">Live transcript</span>
-              {current && (
-                <span className={`subtitle-speaker ${current.speaker}`}>
-                  {current.speaker === "ai" ? "Aria · AI" : "You"}
+          {/* ── State banner ── */}
+          {banner && (
+            <div className={`animate-fade-up flex items-center gap-2.5 px-[18px] py-3 rounded-xl text-xs border ${bannerColors[banner.cls] ?? ""}`}>
+              <span className={banner.icon === "⟳" ? "animate-spin-slow" : ""}>{banner.icon}</span>
+              <span>{error || banner.text}</span>
+            </div>
+          )}
+
+          {/* ── Subtitle box ── */}
+          <div className="subtitle-bar relative rounded-2xl bg-[#0e0e18] border border-white/[0.07] px-6 py-5 min-h-[100px] flex flex-col gap-2.5 overflow-hidden">
+            {/* Meta row */}
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-white/20">Live transcript</span>
+              {currentQ && (
+                <span className={`font-mono text-[10px] tracking-[0.08em] px-2.5 py-[3px] rounded-full ${phase === "listening" ? "text-[#a78bfa] bg-[rgba(167,139,250,0.08)] border border-[rgba(167,139,250,0.2)]" : "text-[#7cf0c8] bg-[rgba(124,240,200,0.08)] border border-[rgba(124,240,200,0.2)]"}`}>
+                  {phase === "listening" ? "You" : "Aria · AI"}
                 </span>
               )}
             </div>
-            <div className={`subtitle-text ${!displayed ? "idle" : ""}`}>
-              {displayed
-                ? <>{displayed}{typing && <span className="cursor" />}</>
-                : "Waiting for speech…"}
-            </div>
+
+            {/* AI question (typewriter) */}
+            {(phase === "speaking" || phase === "listening" || phase === "processing" || phase === "done") && displayedQ ? (
+              <div className="flex items-center text-[15px] leading-[1.65] text-white/[0.82] min-h-[48px]">
+                {displayedQ}{typingQ && <span className="animate-blink inline-block w-[2px] h-[1em] bg-[#7cf0c8] ml-[3px] align-middle rounded-[1px]" />}
+              </div>
+            ) : phase === "generating" ? (
+              <div className="flex items-center text-[13px] min-h-[48px] text-white/20 italic">Generating your question…</div>
+            ) : (
+              <div className="flex items-center text-[13px] min-h-[48px] text-white/20 italic">Waiting…</div>
+            )}
+
+            {/* User live transcript */}
+            {phase === "listening" && (finalAnswer || liveTranscript) && (
+              <div className="text-[13px] text-[rgba(167,139,250,0.5)] italic mt-1">
+                {finalAnswer && <span className="text-[rgba(167,139,250,0.75)] not-italic">{finalAnswer} </span>}
+                {liveTranscript && <span>{liveTranscript}</span>}
+              </div>
+            )}
           </div>
 
-          {/* Controls */}
-          <div className="controls">
+          {/* ── Controls ── */}
+          <div className="flex items-center justify-center gap-3 pb-1.5">
+            {/* Mic / mute */}
             <button
-              className={`ctrl-btn ${muted ? "muted" : ""}`}
+              onClick={() => setMuted(v => !v)}
               title={muted ? "Unmute" : "Mute"}
-              onClick={() => setMuted((v) => !v)}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-lg border border-white/10 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/[0.09] hover:scale-105 ${phase === "listening" ? "animate-mic-pulse bg-[rgba(248,113,113,0.15)] border-[rgba(248,113,113,0.35)]" : ""}`}
             >
               {muted ? "🔇" : "🎤"}
             </button>
+
+            {/* Done answering */}
             <button
-              className="ctrl-btn"
-              title={videoOff ? "Turn camera on" : "Turn camera off"}
-              onClick={() => setVideoOff((v) => !v)}
+              disabled={phase !== "listening"}
+              onClick={handleDoneAnswering}
+              className="font-mono text-[11px] tracking-[0.08em] px-5 py-2.5 rounded-xl border border-white/10 bg-transparent text-white/40 cursor-pointer transition-all hover:border-white/20 hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {videoOff ? "📷" : "🎥"}
+              {qIndex + 1 >= TOTAL_QUESTIONS ? "Finish interview →" : "Done answering →"}
             </button>
+
+            {/* End session */}
             <button
-              className="ctrl-btn end"
+              onClick={() => { sttRef.current?.stop(); camStreamRef.current?.getTracks().forEach(t => t.stop()); navigate("/dashboard"); }}
               title="End session"
-              onClick={() => navigate("/dashboard")}
+              className="w-14 h-14 rounded-full flex items-center justify-center text-xl border border-red-400/30 bg-[rgba(248,113,113,0.12)] cursor-pointer transition-all hover:bg-[rgba(248,113,113,0.25)] hover:border-red-400/55"
             >
               📵
             </button>
-            <button className="ctrl-btn" title="Settings">⚙️</button>
           </div>
 
         </main>
