@@ -96,7 +96,7 @@ export default function Summary() {
           </div>
         </div>
 
-        {/* <div className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className={`${card} p-5`}>
             <p className="text-xs font-semibold text-neutral-500">STUDY RESOURCES</p>
             <div className="mt-2 flex items-end justify-between">
@@ -114,7 +114,7 @@ export default function Summary() {
               </p>
             </div>
           </div>
-        </div> */}
+        </div>
 
         <div className="mt-6">
           <div className={`${card} overflow-hidden`}>
