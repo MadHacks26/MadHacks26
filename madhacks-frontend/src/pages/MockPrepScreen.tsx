@@ -1,11 +1,13 @@
 import * as React from "react";
+import { type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { Mic, Globe, Signal } from "lucide-react";
 
 type CheckStatus = "idle" | "ok" | "warn" | "err";
 
 interface Check {
   id: string;
-  icon: string;
+  icon: ReactNode;
   name: string;
   sub: string;
   status: CheckStatus;
@@ -75,21 +77,21 @@ export default function MockPrepScreen() {
   const [checks, setChecks] = React.useState<Check[]>([
     {
       id: "mic",
-      icon: "🎙️",
+      icon: <Mic size={20} color="#7aecc4" />,
       name: "Microphone",
       sub: "Click to test",
       status: "idle",
     },
     {
       id: "browser",
-      icon: "🌐",
+      icon: <Globe size={20} color="#7aecc4" />,
       name: "Browser",
       sub: "Checking…",
       status: "idle",
     },
     {
       id: "network",
-      icon: "📶",
+      icon: <Signal size={20} color="#7aecc4" />,
       name: "Network",
       sub: "Checking connectivity…",
       status: "idle",
@@ -119,7 +121,6 @@ export default function MockPrepScreen() {
       stopStream();
       cancelAnimationFrame(animFrameRef.current);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function updateCheck(id: string, status: CheckStatus, sub?: string) {
@@ -192,24 +193,25 @@ export default function MockPrepScreen() {
         </h1>
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2">
-          {/* Mic Test */}
           <div className="w-full max-w-full overflow-hidden rounded-2xl border-2 border-[#202026] bg-black p-5">
             <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
               Microphone Test
             </p>
 
-            <div className="h-10 flex items-end justify-center gap-1 rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-2 mb-4">
+            <div className="h-10 flex items-center justify-center gap-1 rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-2 mb-4">
               {micEnabled ? (
-                micVolume.map((h, i) => (
-                  <div
-                    key={i}
-                    className="w-1 rounded-sm bg-[#7aecc4] transition-all duration-100"
-                    style={{ height: h, opacity: 0.6 + (h / 28) * 0.4 }}
-                  />
-                ))
+                <div className="flex items-end gap-1 h-full">
+                  {micVolume.map((h, i) => (
+                    <div
+                      key={i}
+                      className="w-1 rounded-sm bg-[#7aecc4] transition-all duration-100"
+                      style={{ height: h, opacity: 0.6 + (h / 28) * 0.4 }}
+                    />
+                  ))}
+                </div>
               ) : (
-                <span className="text-xs text-neutral-600">
-                  Enable mic to see levels
+                <span className="text-xs text-neutral-400">
+                  Microphone not enabled
                 </span>
               )}
             </div>
@@ -248,7 +250,6 @@ export default function MockPrepScreen() {
             </select>
           </div>
 
-          {/* System Checks */}
           <div className="rounded-2xl border-2 border-[#202026] bg-black p-5">
             <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
               System Checks
@@ -286,7 +287,6 @@ export default function MockPrepScreen() {
           </div>
         </div>
 
-        {/* Interview Details */}
         <div className="mt-5 rounded-2xl border-2 border-[#202026] bg-black p-5">
           <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
             Interview Details
