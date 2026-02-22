@@ -123,6 +123,8 @@ export default function MockInterview() {
   const sttRef       = React.useRef<{ start:()=>void; stop:()=>void } | null>(null);
   const answerRef    = React.useRef("");
   const questionsRef = React.useRef<QuestionItem[]>([]);
+  const userVideoRef = React.useRef<HTMLVideoElement>(null);       // ← camera
+  const camStreamRef = React.useRef<MediaStream | null>(null);    // ← camera
 
   // ── Typewriter ──
   React.useEffect(() => {
@@ -198,6 +200,17 @@ export default function MockInterview() {
     if (hasBooted.current) return;
     hasBooted.current = true;
 
+    // ── Start camera (silent fallback if denied) ──
+    navigator.mediaDevices?.getUserMedia({ video: true, audio: false })
+      .then((stream) => {
+        camStreamRef.current = stream;
+        if (userVideoRef.current) {
+          userVideoRef.current.srcObject = stream;
+          userVideoRef.current.play();
+        }
+      })
+      .catch(() => {});
+
     setPhase("generating");
     generateAllQuestions(TOTAL_QUESTIONS)
       .then((qs) => {
@@ -209,7 +222,10 @@ export default function MockInterview() {
         setError(e?.message ?? "Failed to load questions");
         setPhase("processing");
       });
-    return () => { sttRef.current?.stop(); };
+    return () => {
+      sttRef.current?.stop();
+      camStreamRef.current?.getTracks().forEach((t) => t.stop());  // ← camera cleanup
+    };
   }, []);
 
   // ── Derived ──
@@ -269,7 +285,7 @@ export default function MockInterview() {
 
           {/* Exit */}
           <button
-            onClick={() => { sttRef.current?.stop(); navigate("/dashboard"); }}
+            onClick={() => { sttRef.current?.stop(); camStreamRef.current?.getTracks().forEach(t => t.stop()); navigate("/dashboard"); }}
             className="font-mono text-[11px] tracking-wide uppercase px-4 py-[7px] rounded-lg border border-white/10 bg-transparent text-white/30 cursor-pointer transition-all hover:border-white/20 hover:text-white/60"
           >
             ← Exit
@@ -303,16 +319,24 @@ export default function MockInterview() {
               </div>
             </div>
 
-            {/* User card */}
+            {/* User card — live camera feed */}
             <div className={`v-card user-card relative rounded-[20px] overflow-hidden bg-[#0e0e18] border border-white/[0.07] aspect-[16/10] flex items-center justify-center transition-shadow duration-400 ${userSpeaking ? "speaking glow-user" : ""}`}>
-              <div className="flex flex-col items-center gap-3">
+              {/* Live camera — fills the card */}
+              <video
+                ref={userVideoRef}
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              {/* Emoji fallback — sits behind video, visible only if camera denied
+              <div className="flex flex-col items-center gap-3 pointer-events-none">
                 <div className="avatar-user relative w-[68px] h-[68px] rounded-full flex items-center justify-center text-[30px]">
                   <div className="ring-pulse r1 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
                   <div className="ring-pulse r2 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
                   🧑‍💻
                 </div>
                 <div className="font-mono text-[10px] tracking-widest uppercase text-white/30">You</div>
-              </div>
+              </div> */}
               {/* Nametag */}
               <div className="absolute bottom-3 left-3 font-mono text-[10px] tracking-[0.07em] px-[11px] py-1 rounded-lg bg-black/60 backdrop-blur border border-white/[0.07] text-white/55 flex items-center gap-1.5">
                 <span className="w-[6px] h-[6px] rounded-full flex-shrink-0 bg-[#a78bfa]" />
@@ -387,7 +411,7 @@ export default function MockInterview() {
 
             {/* End session */}
             <button
-              onClick={() => { sttRef.current?.stop(); navigate("/dashboard"); }}
+              onClick={() => { sttRef.current?.stop(); camStreamRef.current?.getTracks().forEach(t => t.stop()); navigate("/dashboard"); }}
               title="End session"
               className="w-14 h-14 rounded-full flex items-center justify-center text-xl border border-red-400/30 bg-[rgba(248,113,113,0.12)] cursor-pointer transition-all hover:bg-[rgba(248,113,113,0.25)] hover:border-red-400/55"
             >
