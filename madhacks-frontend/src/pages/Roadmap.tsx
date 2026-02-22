@@ -27,7 +27,6 @@ type SummaryShape = {
   total_leetcode_problems: number;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────
 
 function normalizeType(kind: string | undefined) {
   const k = String(kind || "").toLowerCase().trim();
@@ -91,7 +90,6 @@ function coerceSummary(x: any): SummaryShape | null {
   return x as SummaryShape;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
 
 export default function Roadmap() {
   const navigate = useNavigate();
@@ -133,9 +131,7 @@ export default function Roadmap() {
     <div className="min-h-screen bg-black text-white">
       <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14 flex flex-col gap-6">
 
-        {/* ── Top section: title + stats ── */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-          {/* Left: title + progress */}
           <div className="w-full lg:max-w-xl flex flex-col gap-4">
             <div>
               <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">STUDY ROADMAP</p>
@@ -162,7 +158,6 @@ export default function Roadmap() {
             )}
           </div>
 
-          {/* Right: stat cards */}
           <div className="grid grid-cols-2 gap-4 w-fit">
             <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] p-5">
               <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Study Resources</p>
@@ -179,7 +174,6 @@ export default function Roadmap() {
           </div>
         </div>
 
-        {/* ── Empty state ── */}
         {!days.length && (
           <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] p-10 text-center flex flex-col items-center gap-4">
             <p className="text-sm font-semibold text-neutral-400">Nothing to show yet.</p>
@@ -193,7 +187,6 @@ export default function Roadmap() {
           </div>
         )}
 
-        {/* ── Day cards grid ── */}
         {days.length > 0 && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {days.map((day) => {
@@ -209,7 +202,6 @@ export default function Roadmap() {
                   }`}
                 >
                   <div className="p-5 flex flex-col gap-4">
-                    {/* Day header */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <h2 className="text-sm font-bold text-white uppercase tracking-wide">
@@ -230,7 +222,6 @@ export default function Roadmap() {
                       )}
                     </div>
 
-                    {/* Mini progress bar */}
                     {dayTotal > 0 && (
                       <div className="h-1 w-full rounded-full bg-[#202026] overflow-hidden">
                         <div
@@ -240,7 +231,7 @@ export default function Roadmap() {
                       </div>
                     )}
 
-                    {/* Checklist items */}
+
                     <div className="flex flex-col gap-2.5">
                       {(day.checklist ?? []).map((item, idx) => {
                         const key     = makeTaskKey(day.day, idx);
@@ -255,7 +246,6 @@ export default function Roadmap() {
                             }`}
                           >
                             <div className="flex items-start gap-3">
-                              {/* Checkbox */}
                               <button
                                 onClick={() => toggle(day.day, idx)}
                                 className={[
@@ -274,24 +264,22 @@ export default function Roadmap() {
                               </button>
 
                               <div className="min-w-0 flex-1">
-                                {/* Badges */}
                                 <div className="flex flex-wrap items-center gap-1.5 mb-2">
-                                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeClass(typeN)}`}>
+                                  <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${badgeClass(typeN)}`}>
                                     {typeN}
                                   </span>
                                   {item.difficulty && (
-                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${difficultyClass(item.difficulty)}`}>
+                                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${difficultyClass(item.difficulty)}`}>
                                       {item.difficulty}
                                     </span>
                                   )}
                                   {item.topic && (
-                                    <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold bg-white/5 text-neutral-400 border border-white/10">
+                                    <span className="rounded-full px-2 py-0.5 text-[11px] font-semibold bg-white/5 text-neutral-400 border border-white/10">
                                       {item.topic}
                                     </span>
                                   )}
                                 </div>
 
-                                {/* Title */}
                                 {item.url ? (
                                   <a href={item.url} target="_blank" rel="noreferrer" className="group">
                                     <p className={`text-sm font-semibold leading-snug transition-colors ${
@@ -318,9 +306,6 @@ export default function Roadmap() {
                       })}
                     </div>
 
-                    <div className="text-xs text-neutral-500">
-                      {dayDone}/{dayTotal} completed
-                    </div>
                   </div>
                 </div>
               );
@@ -328,7 +313,6 @@ export default function Roadmap() {
           </div>
         )}
 
-        {/* ── Footer nav ── */}
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-3">
             <button

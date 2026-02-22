@@ -60,7 +60,7 @@ const buttonGhost =
 const stepVariants = {
   initial: { opacity: 0, y: 10, filter: "blur(4px)" },
   animate: { opacity: 1, y: 0, filter: "blur(0px)" },
-  exit:    { opacity: 0, y: -10, filter: "blur(4px)" },
+  exit: { opacity: 0, y: -10, filter: "blur(4px)" },
 };
 
 type ConceptsResponse = {
@@ -80,13 +80,22 @@ function buildConceptProfile(params: {
   coreLevels: Record<string, number>;
   defaultConfidence?: number;
 }): ConceptProfile {
-  const { dsaConcepts, dsaLevels, coreConcepts, coreLevels, defaultConfidence = 5 } = params;
+  const {
+    dsaConcepts,
+    dsaLevels,
+    coreConcepts,
+    coreLevels,
+    defaultConfidence = 5,
+  } = params;
 
   const dsa_topics: ConceptProfile["dsa_topics"] = {};
   for (const [topic, importance] of Object.entries(dsaConcepts)) {
     dsa_topics[topic] = {
       importance: Number(importance),
-      confidence: typeof dsaLevels[topic] === "number" ? dsaLevels[topic] : defaultConfidence,
+      confidence:
+        typeof dsaLevels[topic] === "number"
+          ? dsaLevels[topic]
+          : defaultConfidence,
     };
   }
 
@@ -94,7 +103,10 @@ function buildConceptProfile(params: {
   for (const [topic, importance] of Object.entries(coreConcepts)) {
     core_fundamentals[topic] = {
       importance: Number(importance),
-      confidence: typeof coreLevels[topic] === "number" ? coreLevels[topic] : defaultConfidence,
+      confidence:
+        typeof coreLevels[topic] === "number"
+          ? coreLevels[topic]
+          : defaultConfidence,
     };
   }
 
@@ -113,7 +125,12 @@ type RoadmapListItem = {
   roadmapJson: any;
 };
 
-function appendRoadmapToList(params: { uid: string; company: string; role: string; roadmapJson: any }) {
+function appendRoadmapToList(params: {
+  uid: string;
+  company: string;
+  role: string;
+  roadmapJson: any;
+}) {
   const { uid, company, role, roadmapJson } = params;
   try {
     const key = roadmapListKey(uid);
@@ -121,8 +138,12 @@ function appendRoadmapToList(params: { uid: string; company: string; role: strin
     const existing = JSON.parse(existingRaw);
     const list: RoadmapListItem[] = Array.isArray(existing) ? existing : [];
     const item: RoadmapListItem = {
-      id: typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : String(Date.now()),
-      company, role,
+      id:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : String(Date.now()),
+      company,
+      role,
       createdAt: Date.now(),
       roadmapJson,
     };
@@ -131,8 +152,6 @@ function appendRoadmapToList(params: { uid: string; company: string; role: strin
   } catch {}
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
-
 export default function Create() {
   const navigate = useNavigate();
   const { user, getIdToken } = useAuth();
@@ -140,41 +159,62 @@ export default function Create() {
   const [step, setStep] = React.useState<Step>(1);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
-    "Arrays & Strings": 1, Hashmap: 1, "Two Pointers": 1, "Sliding Window": 1,
+    "Arrays & Strings": 1,
+    Hashmap: 1,
+    "Two Pointers": 1,
+    "Sliding Window": 1,
   });
-  const [coreConcepts, setCoreConcepts] = React.useState<Record<string, number>>({
-    "Big-O Complexity": 1, Recursion: 1, "Sorting & Searching": 1, "Bit Manipulation": 1,
+  const [coreConcepts, setCoreConcepts] = React.useState<
+    Record<string, number>
+  >({
+    "Big-O Complexity": 1,
+    Recursion: 1,
+    "Sorting & Searching": 1,
+    "Bit Manipulation": 1,
   });
 
   const [conceptsLoading, setConceptsLoading] = React.useState(false);
-  const [conceptsError,   setConceptsError]   = React.useState<string | null>(null);
-  const [roadmapLoading,  setRoadmapLoading]  = React.useState(false);
-  const [roadmapError,    setRoadmapError]    = React.useState<string | null>(null);
+  const [conceptsError, setConceptsError] = React.useState<string | null>(null);
+  const [roadmapLoading, setRoadmapLoading] = React.useState(false);
+  const [roadmapError, setRoadmapError] = React.useState<string | null>(null);
 
-  const [name,        setName]        = React.useState("");
-  const [role,        setRole]        = React.useState("");
-  const [company,     setCompany]     = React.useState("");
-  const [jobLink,     setJobLink]     = React.useState("");
-  const [prepDays,    setPrepDays]    = React.useState<string>("");
+  const [name, setName] = React.useState("");
+  const [role, setRole] = React.useState("");
+  const [company, setCompany] = React.useState("");
+  const [jobLink, setJobLink] = React.useState("");
+  const [prepDays, setPrepDays] = React.useState<string>("");
   const [hoursPerDay, setHoursPerDay] = React.useState<string>("");
 
-  const [dsaLevels,  setDsaLevels]  = React.useState<Record<string, number>>(() =>
+  const [dsaLevels, setDsaLevels] = React.useState<Record<string, number>>(() =>
     Object.fromEntries(Object.keys(dsaConcepts).map((c) => [c, 5]))
   );
-  const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(() =>
-    Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 5]))
+  const [coreLevels, setCoreLevels] = React.useState<Record<string, number>>(
+    () => Object.fromEntries(Object.keys(coreConcepts).map((c) => [c, 5]))
   );
 
-  React.useEffect(() => { setName(user?.displayName ?? ""); });
-  React.useEffect(() => { setDsaLevels((prev) => syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5)); }, [dsaConcepts]);
-  React.useEffect(() => { setCoreLevels((prev) => syncLevelsFromKeys(Object.keys(coreConcepts), prev, 5)); }, [coreConcepts]);
+  React.useEffect(() => {
+    setName(user?.displayName ?? "");
+  });
+  React.useEffect(() => {
+    setDsaLevels((prev) =>
+      syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5)
+    );
+  }, [dsaConcepts]);
+  React.useEffect(() => {
+    setCoreLevels((prev) =>
+      syncLevelsFromKeys(Object.keys(coreConcepts), prev, 5)
+    );
+  }, [coreConcepts]);
 
   const safeName = clampName(name);
 
   const canGoNext =
     (step === 1 && role.trim().length >= 2 && company.trim().length >= 2) ||
-    (step === 2 && parsePositiveInt(prepDays) !== null && parseHours(hoursPerDay) !== null) ||
-    step === 3 || step === 4;
+    (step === 2 &&
+      parsePositiveInt(prepDays) !== null &&
+      parseHours(hoursPerDay) !== null) ||
+    step === 3 ||
+    step === 4;
 
   async function fetchConcepts(): Promise<boolean> {
     setConceptsLoading(true);
@@ -183,25 +223,42 @@ export default function Create() {
       const r = await fetch(`${API_BASE}/api/concepts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: role.trim(), company: company.trim(), jobLink: jobLink.trim() }),
+        body: JSON.stringify({
+          role: role.trim(),
+          company: company.trim(),
+          jobLink: jobLink.trim(),
+        }),
       });
       if (!r.ok) throw new Error(await r.text());
       const data = (await r.json()) as Partial<ConceptsResponse>;
-      if (!data.dsaConcepts || typeof data.dsaConcepts !== "object" || Array.isArray(data.dsaConcepts) ||
-          !data.coreConcepts || typeof data.coreConcepts !== "object" || Array.isArray(data.coreConcepts)) {
+      if (
+        !data.dsaConcepts ||
+        typeof data.dsaConcepts !== "object" ||
+        Array.isArray(data.dsaConcepts) ||
+        !data.coreConcepts ||
+        typeof data.coreConcepts !== "object" ||
+        Array.isArray(data.coreConcepts)
+      ) {
         throw new Error("Backend returned invalid concept format");
       }
       const cleanDsa: Record<string, number> = {};
       for (const [k, v] of Object.entries(data.dsaConcepts)) {
-        const key = String(k).trim(); const num = Number(v);
-        if (!key) continue; if (Number.isFinite(num)) cleanDsa[key] = num;
+        const key = String(k).trim();
+        const num = Number(v);
+        if (!key) continue;
+        if (Number.isFinite(num)) cleanDsa[key] = num;
       }
       const cleanCore: Record<string, number> = {};
       for (const [k, v] of Object.entries(data.coreConcepts)) {
-        const key = String(k).trim(); const num = Number(v);
-        if (!key) continue; if (Number.isFinite(num)) cleanCore[key] = num;
+        const key = String(k).trim();
+        const num = Number(v);
+        if (!key) continue;
+        if (Number.isFinite(num)) cleanCore[key] = num;
       }
-      if (Object.keys(cleanDsa).length === 0 || Object.keys(cleanCore).length === 0) {
+      if (
+        Object.keys(cleanDsa).length === 0 ||
+        Object.keys(cleanCore).length === 0
+      ) {
         throw new Error("Backend returned empty concepts");
       }
       setDsaConcepts(cleanDsa);
@@ -217,11 +274,16 @@ export default function Create() {
 
   async function next() {
     if (!canGoNext) return;
-    if (step === 1) { const ok = await fetchConcepts(); if (!ok) return; }
+    if (step === 1) {
+      const ok = await fetchConcepts();
+      if (!ok) return;
+    }
     setStep((s) => Math.min(4, (s + 1) as Step) as Step);
   }
 
-  function back() { setStep((s) => Math.max(0, (s - 1) as Step) as Step); }
+  function back() {
+    setStep((s) => Math.max(0, (s - 1) as Step) as Step);
+  }
 
   function onEnterNext(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key !== "Enter" || !canGoNext) return;
@@ -239,12 +301,19 @@ export default function Create() {
 
   function showHoursTooltip() {
     setHoursTooltipOpen(true);
-    if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current);
-    hoursTooltipTimer.current = window.setTimeout(() => setHoursTooltipOpen(false), 1600);
+    if (hoursTooltipTimer.current)
+      window.clearTimeout(hoursTooltipTimer.current);
+    hoursTooltipTimer.current = window.setTimeout(
+      () => setHoursTooltipOpen(false),
+      1600
+    );
   }
 
   React.useEffect(() => {
-    return () => { if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current); };
+    return () => {
+      if (hoursTooltipTimer.current)
+        window.clearTimeout(hoursTooltipTimer.current);
+    };
   }, []);
 
   async function finish() {
@@ -252,15 +321,35 @@ export default function Create() {
     setRoadmapError(null);
     const prepDaysNum = parsePositiveInt(prepDays);
     const hoursNum = Number(hoursPerDay);
-    if (prepDaysNum == null || !Number.isFinite(hoursNum) || hoursNum <= 0 || hoursNum > 23) {
+    if (
+      prepDaysNum == null ||
+      !Number.isFinite(hoursNum) ||
+      hoursNum <= 0 ||
+      hoursNum > 23
+    ) {
       setRoadmapError("Please enter valid prep days and hours per day.");
       setRoadmapLoading(false);
       return;
     }
-    const conceptProfile = buildConceptProfile({ dsaConcepts, dsaLevels, coreConcepts, coreLevels, defaultConfidence: 4 });
+    const conceptProfile = buildConceptProfile({
+      dsaConcepts,
+      dsaLevels,
+      coreConcepts,
+      coreLevels,
+      defaultConfidence: 4,
+    });
     const payload = {
-      name: safeName, role: role.trim(), company: company.trim(), jobLink: jobLink.trim(),
-      prepDays: prepDaysNum, hoursPerDay: hoursNum, dsaLevels, coreLevels, dsaConcepts, coreConcepts, conceptProfile,
+      name: safeName,
+      role: role.trim(),
+      company: company.trim(),
+      jobLink: jobLink.trim(),
+      prepDays: prepDaysNum,
+      hoursPerDay: hoursNum,
+      dsaLevels,
+      coreLevels,
+      dsaConcepts,
+      coreConcepts,
+      conceptProfile,
     };
     saveProfile(payload);
     try {
@@ -268,21 +357,42 @@ export default function Create() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          role: payload.role, company: payload.company, jobLink: payload.jobLink,
-          prepDays: payload.prepDays, hoursPerDay: payload.hoursPerDay, conceptProfile: payload.conceptProfile,
+          role: payload.role,
+          company: payload.company,
+          jobLink: payload.jobLink,
+          prepDays: payload.prepDays,
+          hoursPerDay: payload.hoursPerDay,
+          conceptProfile: payload.conceptProfile,
         }),
       });
-      if (!r.ok) { const text = await r.text(); throw new Error(text); }
+      if (!r.ok) {
+        const text = await r.text();
+        throw new Error(text);
+      }
       const roadmapJson = await r.json();
       localStorage.setItem(ROADMAP_KEY, JSON.stringify(roadmapJson));
-      const companyName = (roadmapJson as { company?: string }).company || payload.company;
-      if (user?.uid) appendRoadmapToList({ uid: user.uid, company: companyName, role: payload.role, roadmapJson });
+      const companyName =
+        (roadmapJson as { company?: string }).company || payload.company;
+      if (user?.uid)
+        appendRoadmapToList({
+          uid: user.uid,
+          company: companyName,
+          role: payload.role,
+          roadmapJson,
+        });
       const token = await getIdToken();
       if (token) {
         await fetch(`${API_BASE}/api/roadmap/save`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ company_name: companyName, role: payload.role, roadmap_json: roadmapJson }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            company_name: companyName,
+            role: payload.role,
+            roadmap_json: roadmapJson,
+          }),
         });
       }
       navigate("/summary");
@@ -293,34 +403,46 @@ export default function Create() {
     }
   }
 
-  const stepLabels = ["Role & Company", "Schedule", "DSA Proficiency", "Core Fundamentals"];
+  const stepLabels = [
+    "Role & Company",
+    "Schedule",
+    "DSA Proficiency",
+    "Core Fundamentals",
+  ];
 
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
-
-        {/* ── Top bar ── */}
         <div className="flex items-center justify-between gap-4 mb-8">
-          <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">JARSON.AI</p>
+          <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
+            JARSON.AI
+          </p>
 
-          {/* Step pills */}
           <div className="hidden sm:flex items-center gap-2">
             {stepLabels.map((label, i) => {
-              const n      = i + 1;
+              const n = i + 1;
               const active = step === n;
-              const done   = step > n;
+              const done = step > n;
               return (
                 <div
                   key={n}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all ${
-                    active ? "border-[#7aecc4]/40 bg-[#7aecc4]/10 text-[#7aecc4]"
-                    : done  ? "border-[#7aecc4]/20 bg-transparent text-[#7aecc4]/40"
-                    :         "border-[#202026] bg-transparent text-neutral-600"
+                    active
+                      ? "border-[#7aecc4]/40 bg-[#7aecc4]/10 text-[#7aecc4]"
+                      : done
+                      ? "border-[#7aecc4]/20 bg-transparent text-[#7aecc4]/40"
+                      : "border-[#202026] bg-transparent text-neutral-600"
                   }`}
                 >
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                    done ? "bg-[#7aecc4]/30 text-[#7aecc4]" : active ? "bg-[#7aecc4] text-black" : "bg-[#202026] text-neutral-500"
-                  }`}>
+                  <span
+                    className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
+                      done
+                        ? "bg-[#7aecc4]/30 text-[#7aecc4]"
+                        : active
+                        ? "bg-[#7aecc4] text-black"
+                        : "bg-[#202026] text-neutral-500"
+                    }`}
+                  >
                     {done ? "✓" : n}
                   </span>
                   {label}
@@ -329,96 +451,167 @@ export default function Create() {
             })}
           </div>
 
-          {/* Mobile step counter */}
           <div className="sm:hidden flex items-center gap-2">
-            {[1,2,3,4].map((n) => (
-              <div key={n} className={`h-2 w-8 rounded-full transition-all ${
-                step > n ? "bg-[#7aecc4]/40" : step === n ? "bg-[#7aecc4]" : "bg-[#202026]"
-              }`} />
+            {[1, 2, 3, 4].map((n) => (
+              <div
+                key={n}
+                className={`h-2 w-8 rounded-full transition-all ${
+                  step > n
+                    ? "bg-[#7aecc4]/40"
+                    : step === n
+                    ? "bg-[#7aecc4]"
+                    : "bg-[#202026]"
+                }`}
+              />
             ))}
           </div>
         </div>
 
-        {/* ── Card ── */}
         <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] overflow-hidden">
           <div className="p-6 sm:p-8">
             <AnimatePresence mode="wait">
-
-              {/* ── Step 1 ── */}
               {step === 1 && (
-                <motion.div key="step1" variants={stepVariants} initial="initial" animate="animate" exit="exit"
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  {/* <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1">Step 1 of 4</p> */}
-                  <h2 className="text-xl font-bold text-white">
+                <motion.div
+                  key="step1"
+                  variants={stepVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <h2 className="text-xl font-bold text-[#7aecc4]">
                     Hey{safeName ? `, ${safeName}` : ""}!
                   </h2>
-                  <p className="mt-1 text-sm text-neutral-400">What role are you aiming for, and where?</p>
+                  <p className="mt-1 text-sm text-neutral-200">
+                    What role are you aiming for, and where?
+                  </p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Job Role</label>
-                      <input className={inputBase} placeholder="e.g. SDE Intern" value={role}
-                        onChange={(e) => setRole(e.target.value)} onKeyDown={onEnterNext} autoFocus />
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">
+                        Job Role
+                      </label>
+                      <input
+                        className={inputBase}
+                        placeholder="e.g: SDE Intern"
+                        value={role}
+                        onChange={(e) => setRole(e.target.value)}
+                        onKeyDown={onEnterNext}
+                        autoFocus
+                      />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Company</label>
-                      <input className={inputBase} placeholder="e.g. American Family Insurance" value={company}
-                        onChange={(e) => setCompany(e.target.value)} onKeyDown={onEnterNext} />
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">
+                        Company
+                      </label>
+                      <input
+                        className={inputBase}
+                        placeholder="e.g: American Family Insurance"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        onKeyDown={onEnterNext}
+                      />
                     </div>
                     <div className="flex flex-col gap-2 sm:col-span-2">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Job Posting Link</label>
-                      <input type="url" className={inputBase} placeholder="https://..." value={jobLink}
-                        onChange={(e) => setJobLink(e.target.value)} onKeyDown={onEnterNext} />
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">
+                        Job Posting Link
+                      </label>
+                      <input
+                        type="url"
+                        className={inputBase}
+                        placeholder="https://..."
+                        value={jobLink}
+                        onChange={(e) => setJobLink(e.target.value)}
+                        onKeyDown={onEnterNext}
+                      />
                     </div>
                   </div>
 
                   {conceptsError && (
-                    <p className="mt-4 text-sm font-medium text-red-400">{conceptsError}</p>
+                    <p className="mt-4 text-sm font-medium text-red-400">
+                      {conceptsError}
+                    </p>
                   )}
 
                   <div className="mt-8 flex items-center justify-between">
-                    <button className={buttonGhost} onClick={() => navigate("/")}>Back</button>
-                    <button className={buttonPrimary} onClick={() => void next()} disabled={!canGoNext || conceptsLoading}>
-                      {conceptsLoading ? "Generating…" : "Next →"}
+                    <button
+                      className={buttonGhost}
+                      onClick={() => navigate("/")}
+                    >
+                      Back
+                    </button>
+                    <button
+                      className={buttonPrimary}
+                      onClick={() => void next()}
+                      disabled={!canGoNext || conceptsLoading}
+                    >
+                      {conceptsLoading ? "Generating…" : "Next"}
                     </button>
                   </div>
                 </motion.div>
               )}
 
-              {/* ── Step 2 ── */}
               {step === 2 && (
-                <motion.div key="step2" variants={stepVariants} initial="initial" animate="animate" exit="exit"
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  {/* <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1">Step 2 of 4</p> */}
-                  <h2 className="text-xl font-bold text-white">Let's set your pace</h2>
-                  <p className="mt-1 text-sm text-neutral-400">We'll generate a plan that fits your schedule.</p>
+                <motion.div
+                  key="step2"
+                  variants={stepVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <h2 className="text-xl font-bold text-[#7aecc4]">
+                    Let's set your pace
+                  </h2>
+                  <p className="mt-1 text-sm text-neutral-200">
+                    We'll generate a plan that fits your schedule.
+                  </p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     <div className="rounded-xl border-2 border-[#202026] bg-black p-4 flex flex-col gap-3">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Prep Days</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-400 uppercase">
+                        Prep Days
+                      </label>
                       <input
-                        inputMode="numeric" pattern="[0-9]*"
-                        placeholder="How many days to prep?"
-                        value={prepDays} onKeyDown={onEnterNext}
-                        onChange={(e) => { const v = e.target.value; if (v === "" || /^[0-9]+$/.test(v)) setPrepDays(v); }}
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        placeholder="How many days do you have to prep?"
+                        value={prepDays}
+                        onKeyDown={onEnterNext}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          if (v === "" || /^[0-9]+$/.test(v)) setPrepDays(v);
+                        }}
                         className={`${inputBase} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
                       />
                     </div>
 
                     <div className="rounded-xl border-2 border-[#202026] bg-black p-4 flex flex-col gap-3">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Daily Hours</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-400 uppercase">
+                        Daily Hours
+                      </label>
                       <div className="relative">
                         <input
                           inputMode="decimal"
-                          placeholder="Hours per day?"
-                          value={hoursPerDay} onKeyDown={onEnterNext}
+                          placeholder="How many hours per day can you commit?"
+                          value={hoursPerDay}
+                          onKeyDown={onEnterNext}
                           onChange={(e) => {
                             const v = e.target.value;
-                            if (v === "") { setHoursPerDay(""); return; }
+                            if (v === "") {
+                              setHoursPerDay("");
+                              return;
+                            }
                             if (/^\d*\.?\d*$/.test(v)) {
                               const num = Number(v);
-                              if (!Number.isFinite(num)) { setHoursPerDay(v); return; }
-                              if (num > 23) { showHoursTooltip(); return; }
+                              if (!Number.isFinite(num)) {
+                                setHoursPerDay(v);
+                                return;
+                              }
+                              if (num > 23) {
+                                showHoursTooltip();
+                                return;
+                              }
                               setHoursPerDay(v);
                             }
                           }}
@@ -427,10 +620,21 @@ export default function Create() {
                         <AnimatePresence>
                           {hoursTooltipOpen && (
                             <motion.div
-                              initial={{ opacity: 0, y: 6, filter: "blur(6px)" }}
-                              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                              initial={{
+                                opacity: 0,
+                                y: 6,
+                                filter: "blur(6px)",
+                              }}
+                              animate={{
+                                opacity: 1,
+                                y: 0,
+                                filter: "blur(0px)",
+                              }}
                               exit={{ opacity: 0, y: 6, filter: "blur(6px)" }}
-                              transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                              transition={{
+                                duration: 0.22,
+                                ease: [0.22, 1, 0.36, 1],
+                              }}
                               className="pointer-events-none absolute right-2 top-2 z-10"
                             >
                               <div className="rounded-lg border border-[#202026] bg-[#090b10] px-3 py-2 text-xs font-semibold text-[#7aecc4]">
@@ -444,78 +648,124 @@ export default function Create() {
                   </div>
 
                   <div className="mt-8 flex items-center justify-between">
-                    <button className={buttonGhost} onClick={back}>Back</button>
-                    <button className={buttonPrimary} onClick={() => void next()} disabled={!canGoNext}>Next →</button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ── Step 3 ── */}
-              {step === 3 && (
-                <motion.div key="step3" variants={stepVariants} initial="initial" animate="animate" exit="exit"
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  {/* <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1">Step 3 of 4</p> */}
-                  <h2 className="text-xl font-bold text-white">DSA Proficiency</h2>
-                  <p className="mt-1 text-sm text-neutral-400">Slide honestly — this only helps your plan adapt.</p>
-
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    {Object.entries(dsaConcepts).map(([topic]) => (
-                      <LevelSlider
-                        key={topic} label={topic}
-                        value={dsaLevels[topic] ?? 5}
-                        onChange={(v) => setSlider("dsa", topic, v)}
-                        leftLabel="Weak" rightLabel="Strong"
-                      />
-                    ))}
-                  </div>
-
-                  <div className="mt-8 flex items-center justify-between">
-                    <button className={buttonGhost} onClick={back}>Back</button>
-                    <button className={buttonPrimary} onClick={() => void next()}>Next →</button>
-                  </div>
-                </motion.div>
-              )}
-
-              {/* ── Step 4 ── */}
-              {step === 4 && (
-                <motion.div key="step4" variants={stepVariants} initial="initial" animate="animate" exit="exit"
-                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  {/* <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide mb-1">Step 4 of 4</p> */}
-                  <h2 className="text-xl font-bold text-white">Core Fundamentals</h2>
-                  <p className="mt-1 text-sm text-neutral-400">This helps us tune prep beyond just LeetCode.</p>
-
-                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    {Object.entries(coreConcepts).map(([topic]) => (
-                      <LevelSlider
-                        key={topic} label={topic}
-                        value={coreLevels[topic] ?? 5}
-                        onChange={(v) => setSlider("core", topic, v)}
-                        leftLabel="Weak" rightLabel="Strong"
-                      />
-                    ))}
-                  </div>
-
-                  {roadmapError && (
-                    <p className="mt-4 text-sm font-medium text-red-400">{roadmapError}</p>
-                  )}
-
-                  <div className="mt-8 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <button className={buttonGhost} onClick={back}>Back</button>
-                      <button className={buttonGhost} onClick={() => setStep(1)} disabled={roadmapLoading}>Reset</button>
-                    </div>
-                    <button className={buttonPrimary} onClick={finish} disabled={roadmapLoading}>
-                      {roadmapLoading ? "Generating…" : "Generate →"}
+                    <button className={buttonGhost} onClick={back}>
+                      Back
+                    </button>
+                    <button
+                      className={buttonPrimary}
+                      onClick={() => void next()}
+                      disabled={!canGoNext}
+                    >
+                      Next
                     </button>
                   </div>
                 </motion.div>
               )}
 
+              {step === 3 && (
+                <motion.div
+                  key="step3"
+                  variants={stepVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <h2 className="text-xl font-bold text-[#7aecc4]">
+                    DSA Proficiency
+                  </h2>
+                  <p className="mt-1 text-sm text-neutral-200">
+                    Slide honestly. This only helps your plan adapt.
+                  </p>
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    {Object.entries(dsaConcepts).map(([topic]) => (
+                      <LevelSlider
+                        key={topic}
+                        label={topic}
+                        value={dsaLevels[topic] ?? 5}
+                        onChange={(v) => setSlider("dsa", topic, v)}
+                        leftLabel="Weak"
+                        rightLabel="Strong"
+                      />
+                    ))}
+                  </div>
+
+                  <div className="mt-8 flex items-center justify-between">
+                    <button className={buttonGhost} onClick={back}>
+                      Back
+                    </button>
+                    <button
+                      className={buttonPrimary}
+                      onClick={() => void next()}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 4 && (
+                <motion.div
+                  key="step4"
+                  variants={stepVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <h2 className="text-xl font-bold text-[#7aecc4]">
+                    Core Fundamentals
+                  </h2>
+                  <p className="mt-1 text-sm text-neutral-200">
+                    This helps us tune prep beyond just LeetCode.
+                  </p>
+
+                  <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                    {Object.entries(coreConcepts).map(([topic]) => (
+                      <LevelSlider
+                        key={topic}
+                        label={topic}
+                        value={coreLevels[topic] ?? 5}
+                        onChange={(v) => setSlider("core", topic, v)}
+                        leftLabel="Weak"
+                        rightLabel="Strong"
+                      />
+                    ))}
+                  </div>
+
+                  {roadmapError && (
+                    <p className="mt-4 text-sm font-medium text-red-400">
+                      {roadmapError}
+                    </p>
+                  )}
+
+                  <div className="mt-8 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <button className={buttonGhost} onClick={back}>
+                        Back
+                      </button>
+                      <button
+                        className={buttonGhost}
+                        onClick={() => setStep(1)}
+                        disabled={roadmapLoading}
+                      >
+                        Reset
+                      </button>
+                    </div>
+                    <button
+                      className={buttonPrimary}
+                      onClick={finish}
+                      disabled={roadmapLoading}
+                    >
+                      {roadmapLoading ? "Generating…" : "Generate"}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </AnimatePresence>
           </div>
-          
         </div>
-
       </div>
     </div>
   );
