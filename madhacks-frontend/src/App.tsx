@@ -2,6 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import Summary from "./pages/Summary.tsx";
 import Dashboard from "./pages/Dashboard";
+import MockInterview from "./pages/MockInterview";
+import MockPrepScreen from "./pages/Mockprepscreen.tsx";
+
 
 export default function App() {
   return (
@@ -10,6 +13,9 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/summary" element={<Summary />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/mock-interview" element={<MockPrepScreen />} />
+        <Route path="/mock-interview/session" element={<MockInterview />} />
+
       </Routes>
     </BrowserRouter>
   );
