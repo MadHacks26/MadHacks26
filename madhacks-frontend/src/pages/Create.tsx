@@ -119,8 +119,8 @@ function buildConceptProfile(params: {
 
 export default function Create() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  console.log(user);
+  const { user, getIdToken } = useAuth();
+  // console.log(user);
   const [step, setStep] = React.useState<Step>(1);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
@@ -362,6 +362,27 @@ export default function Create() {
       console.log("[Home] /api/roadmap response:", roadmapJson);
       console.log("[Home] saving ROADMAP_KEY =", ROADMAP_KEY);
       localStorage.setItem(ROADMAP_KEY, JSON.stringify(roadmapJson));
+
+      const companyName =
+      (roadmapJson as { company?: string }).company || payload.company;
+      const token = await getIdToken();
+      if (token) {
+        const saveRes = await fetch(`${API_BASE}/api/roadmap/save`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            company_name: companyName,
+            roadmap_json: roadmapJson,
+          }),
+        });
+        if (!saveRes.ok) {
+          console.warn("[Home] /api/roadmap/save failed:", await saveRes.text());
+        }
+      }
+
       console.log(
         "[Home] stored ROADMAP_KEY length:",
         localStorage.getItem(ROADMAP_KEY)?.length

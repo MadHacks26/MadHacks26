@@ -11,7 +11,7 @@ const buttonPrimary =
 
 export default function Home() {
   const navigate = useNavigate();
-  const { user, loading, logout , getIdToken} = useAuth();
+  const { user, loading, logout } = useAuth();
 
   React.useEffect(() => {
     if (!loading && !user) {
