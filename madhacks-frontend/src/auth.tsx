@@ -88,9 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     clearError,
   };
 
-  return (
-    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth(): AuthContextValue {
@@ -104,8 +102,8 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
-        <p className="text-sm text-neutral-600">Loading...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#090b10]">
+        <div className="w-20 h-20 border-4 border-[#7aecc4] border-t-transparent rounded-full animate-spin"></div>
       </div>
     );
   }
