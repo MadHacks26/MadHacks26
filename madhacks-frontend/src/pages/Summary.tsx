@@ -123,7 +123,7 @@ export default function Summary() {
 
               <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl p-0 sm:flex-row">
                 <button className={buttonGhost} onClick={() => navigate("/")}>
-                  Start Over
+                  Home
                 </button>
                 <button
                   className={buttonPrimary}

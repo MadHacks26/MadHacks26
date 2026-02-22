@@ -421,11 +421,11 @@ export default function Roadmap() {
           <div className="flex items-center gap-3">
             <button
               className={buttonGhost}
-              onClick={() => navigate("/summary")}
+              onClick={() => navigate("/")}
             >
-              Back
+              Home
             </button>
-            <button
+            {/* <button
               className={buttonGhost}
               onClick={() => {
                 saveChecks({});
@@ -436,7 +436,7 @@ export default function Roadmap() {
               disabled={!days.length}
             >
               Reset
-            </button>
+            </button> */}
           </div>
 
           <div>

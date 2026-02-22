@@ -117,10 +117,53 @@ function buildConceptProfile(params: {
   return { dsa_topics, core_fundamentals };
 }
 
+function roadmapListKey(uid: string) {
+  return `madhacks_roadmaps_list_v1:${uid}`;
+}
+
+type RoadmapListItem = {
+  id: string;
+  company: string;
+  role: string;
+  createdAt: number;
+  roadmapJson: any;
+};
+
+function appendRoadmapToList(params: {
+  uid: string;
+  company: string;
+  role: string;
+  roadmapJson: any;
+}) {
+  const { uid, company, role, roadmapJson } = params;
+
+  try {
+    const key = roadmapListKey(uid);
+    const existingRaw = localStorage.getItem(key) || "[]";
+    const existing = JSON.parse(existingRaw);
+    const list: RoadmapListItem[] = Array.isArray(existing) ? existing : [];
+
+    const item: RoadmapListItem = {
+      id:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : String(Date.now()),
+      company,
+      role,
+      createdAt: Date.now(),
+      roadmapJson,
+    };
+
+    list.unshift(item);
+    localStorage.setItem(key, JSON.stringify(list));
+  } catch {
+  }
+}
+
 export default function Create() {
   const navigate = useNavigate();
   const { user, getIdToken } = useAuth();
-  // console.log(user);
+
   const [step, setStep] = React.useState<Step>(1);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
@@ -164,6 +207,7 @@ export default function Create() {
   React.useEffect(() => {
     setName(user?.displayName ?? "");
   });
+
   React.useEffect(() => {
     setDsaLevels((prev) =>
       syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5)
@@ -354,17 +398,26 @@ export default function Create() {
 
       if (!r.ok) {
         const text = await r.text();
-        console.error("[Home] /api/roadmap error:", text);
+        console.error("[Create] /api/roadmap error:", text);
         throw new Error(text);
       }
 
       const roadmapJson = await r.json();
-      console.log("[Home] /api/roadmap response:", roadmapJson);
-      console.log("[Home] saving ROADMAP_KEY =", ROADMAP_KEY);
+
       localStorage.setItem(ROADMAP_KEY, JSON.stringify(roadmapJson));
 
       const companyName =
-      (roadmapJson as { company?: string }).company || payload.company;
+        (roadmapJson as { company?: string }).company || payload.company;
+
+      if (user?.uid) {
+        appendRoadmapToList({
+          uid: user.uid,
+          company: companyName,
+          role: payload.role,
+          roadmapJson,
+        });
+      }
+
       const token = await getIdToken();
       if (token) {
         const saveRes = await fetch(`${API_BASE}/api/roadmap/save`, {
@@ -375,18 +428,17 @@ export default function Create() {
           },
           body: JSON.stringify({
             company_name: companyName,
+            role: payload.role,
             roadmap_json: roadmapJson,
           }),
         });
         if (!saveRes.ok) {
-          console.warn("[Home] /api/roadmap/save failed:", await saveRes.text());
+          console.warn(
+            "[Create] /api/roadmap/save failed:",
+            await saveRes.text()
+          );
         }
       }
-
-      console.log(
-        "[Home] stored ROADMAP_KEY length:",
-        localStorage.getItem(ROADMAP_KEY)?.length
-      );
 
       navigate("/summary");
     } catch (e: any) {

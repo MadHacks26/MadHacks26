@@ -9,9 +9,37 @@ const card = "rounded-2xl border-2 border-[#202026] bg-[#000000] shadow-sm";
 const buttonPrimary =
   "inline-flex items-center justify-center rounded-xl bg-[#7aecc4] text-black px-5 py-3 text-sm font-semibold tracking-wide transition hover:bg-white hover:text-black active:scale-[0.99] disabled:text-white disabled:cursor-not-allowed disabled:bg-[#1c2b2b]";
 
+const ROADMAP_KEY = "madhacks_roadmap_data_v1";
+
+function roadmapListKey(uid: string) {
+  return `madhacks_roadmaps_list_v1:${uid}`;
+}
+
+type RoadmapListItem = {
+  id: string;
+  company: string;
+  role: string;
+  createdAt: number;
+  roadmapJson: any;
+};
+
+function readRoadmapList(uid: string): RoadmapListItem[] {
+  try {
+    const raw = localStorage.getItem(roadmapListKey(uid));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
+
+  const [roadmaps, setRoadmaps] = React.useState<RoadmapListItem[]>([]);
 
   React.useEffect(() => {
     if (!loading && !user) {
@@ -19,8 +47,18 @@ export default function Home() {
     }
   }, [loading, user, navigate]);
 
+  React.useEffect(() => {
+    if (!user?.uid) return;
+    setRoadmaps(readRoadmapList(user.uid));
+  }, [user?.uid]);
+
   const handleCreateRoadmap = () => {
     navigate("/create");
+  };
+
+  const handleView = (rm: RoadmapListItem) => {
+    localStorage.setItem(ROADMAP_KEY, JSON.stringify(rm.roadmapJson));
+    navigate("/roadmap");
   };
 
   const handleSignOut = async () => {
@@ -80,22 +118,42 @@ export default function Home() {
         </div>
 
         <div className={`${card} mt-8 p-6 sm:p-8`}>
-          <div className="flex flex-col gap-6">
-            <div className="rounded-2xl bg-black p-6 sm:p-10 text-center">
-              <p className="text-lg font-semibold text-white">
-                No roadmaps created yet
-              </p>
-
-              <div className="mt-6 flex justify-center">
-                <button
-                  type="button"
-                  className={buttonPrimary}
-                  onClick={handleCreateRoadmap}
+          {roadmaps.length > 0 && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {roadmaps.map((rm) => (
+                <div
+                  key={rm.id}
+                  className="rounded-2xl border border-[#202026] bg-black p-5"
                 >
-                  Create Roadmap
-                </button>
-              </div>
+                  <h3 className="text-lg font-semibold text-white">
+                    {rm.company || "Unknown Company"}
+                  </h3>
+                  <p className="mt-1 text-sm text-neutral-400">
+                    {rm.role || "Unknown Role"}
+                  </p>
+
+                  <div className="mt-5 flex items-center justify-end gap-3">
+                    <button
+                      type="button"
+                      className={buttonPrimary}
+                      onClick={() => handleView(rm)}
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
+          )}
+
+          <div className={roadmaps.length > 0 ? "mt-8 flex justify-center" : "flex justify-center"}>
+            <button
+              type="button"
+              className={buttonPrimary}
+              onClick={handleCreateRoadmap}
+            >
+              Create Roadmap
+            </button>
           </div>
         </div>
 
