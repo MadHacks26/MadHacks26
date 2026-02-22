@@ -1,12 +1,25 @@
 from typing import Dict, Optional
-
+import os
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
+
+load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from llm import generate_concepts_from_prompt, generate_roadmap_from_profile
 
 app = FastAPI()
+
+default_origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
+extra = os.getenv("ALLOWED_ORIGINS", "")
+extra_origins = [o.strip() for o in extra.split(",") if o.strip()]
+
+allow_origins = default_origins + extra_origins
 
 app.add_middleware(
     CORSMiddleware,
@@ -109,3 +122,17 @@ def roadmap(req: RoadmapRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def main():
+    import uvicorn
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
+
+
+if __name__ == "__main__":
+    main()

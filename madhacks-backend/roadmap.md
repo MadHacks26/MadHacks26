@@ -95,8 +95,8 @@ These are the DSA topics and core fundamentals needed for the role, with importa
 
 - Return **only** valid JSON. No preamble, no markdown code fences, no explanation.
 - **LeetCode**: Include 1–4 problems per day depending on difficulty. Prefer problems frequently asked at {{company_name}} or for {{job_role}}. Mix easy/medium/hard based on user's current level and gap.
-- **Study resources**: For each new or weak concept, include 1–2 blog posts or Medium articles. Use web search to find real, current URLs. Prefer well-known sources (Medium, dev.to, GeeksforGeeks, etc.).
-- Each problem/resource listed must have a link attached.
+- **Study resources**: For each new or weak concept, include 1–2 blog posts from one of the following websites - GeeksForGeeks, CP-Algorithms. Use web search to find real, current URLs.
+- Each problem/resource listed must have a link attached. Make sure that the links attached are not broken (you can check the headers to get a hint about broken links)!
 - **Prioritization**: Majority of timeline should focus on highest-priority weaker areas. Later days can include mixed revision.
 - **Realistic pacing**: Do not overload a day. A typical day might be: 2–3 LeetCode problems + 1–2 concept readings, or 1 deep concept study + 1–2 problems.
 - major_focus_areas in the summary must consist of the ones which have the most content to be practiced. List the top 5 areas to be focused.
@@ -121,10 +121,17 @@ These are the DSA topics and core fundamentals needed for the role, with importa
 ```json
 {
   "type": "study",
-  "title": "Graph Traversal: BFS and DFS - A Complete Guide",
-  "url": "https://medium.com/example/graph-bfs-dfs",
+  "title": "Depth First Search or DFS for a Graph",
+  "url": "https://www.geeksforgeeks.org/dsa/depth-first-search-or-dfs-for-a-graph/",
   "topic": "graphs",
-  "reason": "Covers BFS/DFS fundamentals needed for graph problems"
+  "reason": "Covers the DFS fundamentals needed for graph problems"
+},
+{
+  "type": "study",
+  "title": "Dynamic Programming basics",
+  "url": "https://cp-algorithms.com/dynamic_programming/intro-to-dp.html",
+  "topic": "dynamic programming",
+  "reason": "Introduces the basics of dynamic programming"
 }
 ```
 

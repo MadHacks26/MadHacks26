@@ -3,9 +3,9 @@ import time
 import json
 from datetime import datetime
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv # type: ignore
 from google import genai
-from google.genai import types
+from google.genai import types # type: ignore
 
 load_dotenv()
 
@@ -245,4 +245,39 @@ if __name__ == "__main__":
     job_link = "https://www.qualcomm.com/careers/students/internships"
 
     print("\n--- Parsed Concepts ---")
-    print(generate_concepts_from_prompt(company_name, job_role, job_link))
+    # print(generate_concepts_from_prompt(company_name, job_role, job_link))
+    # Mock profile data for roadmap generation
+    mock_dsa_topics = {
+        "arrays": {"importance": 9, "confidence": 5},
+        "dynamic programming": {"importance": 10, "confidence": 3},
+        "linked lists": {"importance": 7, "confidence": 6},
+        "trees": {"importance": 8, "confidence": 4},
+        "graphs": {"importance": 8, "confidence": 2},
+        "hash maps": {"importance": 7, "confidence": 5},
+        "heaps": {"importance": 6, "confidence": 3},
+        "two pointers": {"importance": 5, "confidence": 7},
+        "bit manipulation": {"importance": 4, "confidence": 2},
+        "trie": {"importance": 3, "confidence": 1},
+    }
+    mock_core_fundamentals = {
+        "Operating Systems": {"importance": 9, "confidence": 5},
+        "DBMS": {"importance": 8, "confidence": 6},
+        "OOP": {"importance": 7, "confidence": 7},
+        "Computer Networks": {"importance": 7, "confidence": 3},
+        "System Design": {"importance": 9, "confidence": 2},
+        "Concurrency": {"importance": 6, "confidence": 4},
+        "Low-Level Design": {"importance": 5, "confidence": 2},
+    }
+
+    roadmap = generate_roadmap_from_profile(
+        company_name=company_name,
+        job_role=job_role,
+        job_link=job_link,
+        total_prep_days=14,
+        daily_hours=2,
+        dsa_topics=mock_dsa_topics,
+        core_fundamentals=mock_core_fundamentals,
+    )
+    print("\n--- Sample Roadmap Output ---")
+    print(json.dumps(roadmap, indent=2))
+    print(generate_roadmap_from_profile())
