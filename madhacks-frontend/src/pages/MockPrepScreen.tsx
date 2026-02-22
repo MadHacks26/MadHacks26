@@ -724,8 +724,8 @@ export default function MockPrepScreen() {
   }
 
   const isReady = checks.every((c) => c.status === "ok" || c.status === "warn");
-  const micCheck = checks.find((c) => c.id === "mic")!;
-  const camCheck = checks.find((c) => c.id === "cam")!;
+  // const micCheck = checks.find((c) => c.id === "mic")!;
+  // const camCheck = checks.find((c) => c.id === "cam")!;
 
   function badgeLabel(s: CheckStatus) {
     if (s === "ok")   return "OK";

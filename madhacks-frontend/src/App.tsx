@@ -3,7 +3,7 @@ import Home from "./pages/Home";
 import Summary from "./pages/Summary.tsx";
 import Dashboard from "./pages/Dashboard";
 import MockInterview from "./pages/MockInterview";
-import MockPrepScreen from "./pages/Mockprepscreen.tsx";
+import MockPrepScreen from "./pages/MockPrepScreen.tsx";
 
 
 export default function App() {
