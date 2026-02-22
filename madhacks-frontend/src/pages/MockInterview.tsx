@@ -9,25 +9,15 @@ import {
   type QAPair,
 } from "../lib/interviewEngine";
 
-// ─── Styles ───────────────────────────────────────────────────────────────
-
+// ─── Minimal style block: only what Tailwind can't express ────────────────
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Sora:wght@300;400;500;600;700&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .font-sora  { font-family: 'Sora', sans-serif; }
+  .font-mono  { font-family: 'DM Mono', monospace; }
 
-  .mi-root {
-    min-height: 100vh;
-    background: #0a0a0f;
-    color: #e8e8f0;
-    font-family: 'Sora', sans-serif;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-  }
-
-  .mi-root::before {
+  /* Grid background */
+  .mi-grid-bg::before {
     content: '';
     position: fixed;
     inset: 0;
@@ -39,279 +29,102 @@ const styles = `
     z-index: 0;
   }
 
-  /* ── Header ── */
-  .mi-header {
-    position: relative; z-index: 10;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 16px 28px;
-    border-bottom: 1px solid rgba(255,255,255,0.06);
-    background: rgba(10,10,15,0.9);
-    backdrop-filter: blur(12px);
-    flex-wrap: wrap; gap: 12px;
+  /* Avatar rings animate only when parent card is .speaking */
+  .v-card.speaking .ring-pulse.r1 {
+    border-color: rgba(124,240,200,0.5);
+    animation: ring-expand 1.8s ease-out infinite;
+  }
+  .v-card.speaking .ring-pulse.r2 {
+    border-color: rgba(124,240,200,0.3);
+    animation: ring-expand 1.8s ease-out 0.5s infinite;
+  }
+  .v-card.user-card.speaking .ring-pulse.r1 {
+    border-color: rgba(167,139,250,0.5);
+    animation: ring-expand 1.8s ease-out infinite;
+  }
+  .v-card.user-card.speaking .ring-pulse.r2 {
+    border-color: rgba(167,139,250,0.3);
+    animation: ring-expand 1.8s ease-out 0.5s infinite;
+  }
+  @keyframes ring-expand {
+    0%   { opacity: .9; transform: scale(.95); }
+    100% { opacity: 0;  transform: scale(1.6); }
   }
 
-  .mi-logo {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: rgba(255,255,255,0.35);
-  }
-  .mi-logo em { color: #7cf0c8; font-style: normal; }
-
-  .mi-progress-wrap {
-    display: flex; align-items: center; gap: 10px;
-    flex: 1; max-width: 320px; margin: 0 auto;
-  }
-
-  .mi-progress-track {
-    flex: 1; height: 3px; border-radius: 99px;
-    background: rgba(255,255,255,0.07);
-    overflow: hidden;
-  }
-  .mi-progress-fill {
-    height: 100%; border-radius: 99px;
-    background: linear-gradient(90deg, #7cf0c8, #7c9df0);
-    transition: width 0.6s ease;
-  }
-
-  .mi-q-counter {
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    color: rgba(255,255,255,0.3); letter-spacing: 0.1em; white-space: nowrap;
-  }
-
-  .live-badge {
-    display: flex; align-items: center; gap: 6px;
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: 0.1em; text-transform: uppercase;
-    color: rgba(255,255,255,0.4);
-  }
-  .live-dot {
-    width: 7px; height: 7px; border-radius: 50%; background: #f87171;
-    animation: pulse-dot 1.8s ease-in-out infinite;
-  }
   @keyframes pulse-dot {
     0%,100% { opacity:1; transform:scale(1); }
-    50%      { opacity:.4; transform:scale(.7); }
+    50%     { opacity:.4; transform:scale(.7); }
   }
+  .animate-pulse-dot { animation: pulse-dot 1.8s ease-in-out infinite; }
 
-  .btn-exit {
-    font-family: 'DM Mono', monospace; font-size: 11px;
-    letter-spacing: 0.08em; text-transform: uppercase;
-    padding: 7px 16px; border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.1);
-    background: transparent; color: rgba(255,255,255,0.3);
-    cursor: pointer; transition: all 0.2s;
+  @keyframes blink {
+    0%,100% { opacity:1; }
+    50%     { opacity:0; }
   }
-  .btn-exit:hover { border-color: rgba(255,255,255,0.2); color: rgba(255,255,255,0.6); }
+  .animate-blink { animation: blink 1s step-end infinite; }
 
-  /* ── Body ── */
-  .mi-body {
-    position: relative; z-index: 1;
-    flex: 1; display: flex; flex-direction: column;
-    gap: 18px; padding: 24px 28px;
-    max-width: 1100px; width: 100%; margin: 0 auto;
-  }
+  @keyframes spin-slow { to { transform: rotate(360deg); } }
+  .animate-spin-slow { animation: spin-slow 1s linear infinite; }
 
-  /* ── Video row ── */
-  .video-row {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  @keyframes fade-up {
+    from { opacity:0; transform:translateY(4px); }
+    to   { opacity:1; transform:none; }
   }
-  @media (max-width: 640px) { .video-row { grid-template-columns: 1fr; } }
+  .animate-fade-up { animation: fade-up 0.3s ease; }
 
-  .v-card {
-    position: relative; border-radius: 20px; overflow: hidden;
-    aspect-ratio: 16/10; background: #0e0e18;
-    border: 1px solid rgba(255,255,255,0.07);
-    transition: box-shadow 0.4s;
-    display: flex; align-items: center; justify-content: center;
+  @keyframes mic-pulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(248,113,113,0.3); }
+    50%     { box-shadow: 0 0 0 8px rgba(248,113,113,0); }
   }
-  .v-card.speaking {
-    box-shadow: 0 0 0 2px #7cf0c8, 0 0 28px rgba(124,240,200,0.12);
-  }
-  .v-card.user-card.speaking {
-    box-shadow: 0 0 0 2px #a78bfa, 0 0 28px rgba(167,139,250,0.12);
-  }
+  .animate-mic-pulse { animation: mic-pulse 1.2s ease-in-out infinite; }
 
-  .v-inner { display:flex; flex-direction:column; align-items:center; gap:12px; }
+  /* Speaking glow borders */
+  .glow-ai   { box-shadow: 0 0 0 2px #7cf0c8, 0 0 28px rgba(124,240,200,0.12); }
+  .glow-user { box-shadow: 0 0 0 2px #a78bfa, 0 0 28px rgba(167,139,250,0.12); }
 
-  .avatar-ring {
-    width: 68px; height: 68px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    position: relative; font-size: 30px;
-  }
-  .avatar-ring.ai   { background:linear-gradient(135deg,#1a2a3a,#0d1f2d); border:2px solid rgba(124,240,200,0.3); }
-  .avatar-ring.user { background:linear-gradient(135deg,#1e1a2e,#120f20); border:2px solid rgba(167,139,250,0.3); }
-
-  .ring-pulse { position:absolute; inset:-6px; border-radius:50%; border:1.5px solid; opacity:0; }
-  .v-card.speaking     .ring-pulse.r1 { border-color:rgba(124,240,200,0.5); animation:ring-expand 1.8s ease-out infinite; }
-  .v-card.speaking     .ring-pulse.r2 { border-color:rgba(124,240,200,0.3); animation:ring-expand 1.8s ease-out 0.5s infinite; }
-  .v-card.user-card.speaking .ring-pulse.r1 { border-color:rgba(167,139,250,0.5); animation:ring-expand 1.8s ease-out infinite; }
-  .v-card.user-card.speaking .ring-pulse.r2 { border-color:rgba(167,139,250,0.3); animation:ring-expand 1.8s ease-out .5s infinite; }
-  @keyframes ring-expand {
-    0%   { opacity:.9; transform:scale(.95); }
-    100% { opacity:0;  transform:scale(1.6); }
-  }
-
-  .v-label {
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.3);
-  }
-
-  .v-nametag {
-    position: absolute; bottom: 12px; left: 12px;
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: 0.07em; padding: 4px 11px; border-radius: 8px;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
-    border: 1px solid rgba(255,255,255,0.07); color: rgba(255,255,255,0.55);
-    display: flex; align-items: center; gap: 6px;
-  }
-  .v-dot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
-
-  .v-status {
-    position: absolute; top: 12px; right: 12px;
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    padding: 4px 10px; border-radius: 20px;
-    background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.07);
-    color: rgba(255,255,255,0.4); letter-spacing: 0.06em;
-    transition: all 0.3s;
-  }
-  .v-status.active { color: #7cf0c8; border-color: rgba(124,240,200,0.3); }
-  .v-status.recording { color: #f87171; border-color: rgba(248,113,113,0.3); }
-
-  /* ── Subtitle ── */
-  .subtitle-box {
-    border-radius: 16px; background: #0e0e18;
-    border: 1px solid rgba(255,255,255,0.07);
-    padding: 20px 24px; min-height: 100px;
-    display: flex; flex-direction: column; gap: 10px;
-    position: relative; overflow: hidden;
-  }
-  .subtitle-box::before {
+  /* Subtitle top gradient bar */
+  .subtitle-bar::before {
     content: '';
     position: absolute; top:0; left:0; right:0; height:2px;
     background: linear-gradient(90deg, #7cf0c8, #7c9df0, #c07cf0);
   }
-  .sub-meta {
-    display: flex; align-items: center; justify-content: space-between;
-  }
-  .sub-label {
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.2);
-  }
-  .sub-speaker {
-    font-family: 'DM Mono', monospace; font-size: 10px;
-    letter-spacing: 0.08em; padding: 3px 10px; border-radius: 20px;
-  }
-  .sub-speaker.ai   { color:#7cf0c8; background:rgba(124,240,200,0.08); border:1px solid rgba(124,240,200,0.2); }
-  .sub-speaker.user { color:#a78bfa; background:rgba(167,139,250,0.08); border:1px solid rgba(167,139,250,0.2); }
 
-  .sub-text {
-    font-size: 15px; line-height: 1.65; color: rgba(255,255,255,0.82);
-    min-height: 48px; display: flex; align-items: center;
-  }
-  .sub-text.idle { color:rgba(255,255,255,0.18); font-style:italic; font-size:13px; }
-
-  .cursor {
-    display:inline-block; width:2px; height:1em;
-    background:#7cf0c8; margin-left:3px; vertical-align:middle;
-    border-radius:1px; animation:blink 1s step-end infinite;
-  }
-  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-  /* interim (live user speech) */
-  .sub-interim { font-size:13px; color:rgba(167,139,250,0.5); font-style:italic; margin-top:4px; }
-
-  /* ── State banner ── */
-  .state-banner {
-    display: flex; align-items: center; gap: 10px;
-    padding: 12px 18px; border-radius: 12px;
-    font-size: 12px; animation: fade-in 0.3s ease;
-    border: 1px solid;
-  }
-  @keyframes fade-in { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
-  .state-banner.loading  { background:rgba(124,140,240,0.07); border-color:rgba(124,140,240,0.2); color:rgba(124,140,240,0.85); }
-  .state-banner.speaking { background:rgba(124,240,200,0.07); border-color:rgba(124,240,200,0.2); color:rgba(124,240,200,0.85); }
-  .state-banner.listening{ background:rgba(248,113,113,0.07); border-color:rgba(248,113,113,0.2); color:rgba(248,113,113,0.85); }
-  .state-banner.done     { background:rgba(251,191,36,0.07);  border-color:rgba(251,191,36,0.2);  color:rgba(251,191,36,0.85); }
-
-  .spin { animation: spin 1s linear infinite; display:inline-block; }
-  @keyframes spin { to { transform:rotate(360deg); } }
-
-  /* ── Controls ── */
-  .mi-controls {
-    display: flex; align-items: center; justify-content: center; gap: 12px;
-    padding-bottom: 6px;
+  /* Progress gradient fill */
+  .progress-fill {
+    background: linear-gradient(90deg, #7cf0c8, #7c9df0);
+    transition: width 0.6s ease;
   }
 
-  .ctrl {
-    width:48px; height:48px; border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    font-size:18px; cursor:pointer;
-    border:1px solid rgba(255,255,255,0.1);
-    background:rgba(255,255,255,0.04);
-    transition:all 0.2s;
-  }
-  .ctrl:hover { background:rgba(255,255,255,0.09); transform:scale(1.07); }
-  .ctrl:disabled { opacity:0.3; cursor:not-allowed; transform:none; }
-
-  .ctrl-skip {
-    font-family:'DM Mono',monospace; font-size:11px; letter-spacing:0.08em;
-    padding:10px 20px; border-radius:12px;
-    border:1px solid rgba(255,255,255,0.1); background:transparent;
-    color:rgba(255,255,255,0.4); cursor:pointer; transition:all 0.2s;
-  }
-  .ctrl-skip:hover { border-color:rgba(255,255,255,0.2); color:rgba(255,255,255,0.7); }
-  .ctrl-skip:disabled { opacity:0.3; cursor:not-allowed; }
-
-  .ctrl-end {
-    width:56px; height:56px; font-size:20px;
-    background:rgba(248,113,113,0.12); border-color:rgba(248,113,113,0.3);
-  }
-  .ctrl-end:hover { background:rgba(248,113,113,0.25) !important; border-color:rgba(248,113,113,0.55) !important; }
-
-  /* mic pulse while recording */
-  .ctrl-mic.recording {
-    background:rgba(248,113,113,0.15); border-color:rgba(248,113,113,0.35);
-    animation: mic-pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes mic-pulse {
-    0%,100%{ box-shadow:0 0 0 0 rgba(248,113,113,0.3); }
-    50%    { box-shadow:0 0 0 8px rgba(248,113,113,0); }
-  }
+  /* AI avatar bg */
+  .avatar-ai   { background: linear-gradient(135deg,#1a2a3a,#0d1f2d); border: 2px solid rgba(124,240,200,0.3); }
+  .avatar-user { background: linear-gradient(135deg,#1e1a2e,#120f20); border: 2px solid rgba(167,139,250,0.3); }
 `;
 
 // ─── Interview phases ──────────────────────────────────────────────────────
-
-type Phase =
-  | "generating"   // calling Gemini
-  | "speaking"     // ElevenLabs playing
-  | "listening"    // STT active
-  | "processing"   // saving answer, looping
-  | "done";        // all questions answered
-
+type Phase = "generating" | "speaking" | "listening" | "processing" | "done";
 const TOTAL_QUESTIONS = 5;
 
 // ─── Component ────────────────────────────────────────────────────────────
-
 export default function MockInterview() {
   const navigate = useNavigate();
 
   const [phase, setPhase]           = React.useState<Phase>("generating");
-  const [questions, setQuestions]   = React.useState<QuestionItem[]>([]);  // all Qs loaded upfront
-  const [qIndex, setQIndex]         = React.useState(0);                   // which Q we're on
+  const [questions, setQuestions]   = React.useState<QuestionItem[]>([]);
+  const [qIndex, setQIndex]         = React.useState(0);
   const [history, setHistory]       = React.useState<QAPair[]>([]);
   const [currentQ, setCurrentQ]     = React.useState<{ question: string; topic: string } | null>(null);
-  const [displayedQ, setDisplayedQ] = React.useState("");   // typewriter
+  const [displayedQ, setDisplayedQ] = React.useState("");
   const [typingQ, setTypingQ]       = React.useState(false);
-  const [liveTranscript, setLive]   = React.useState("");   // interim STT
-  const [finalAnswer, setFinal]     = React.useState("");   // confirmed STT
+  const [liveTranscript, setLive]   = React.useState("");
+  const [finalAnswer, setFinal]     = React.useState("");
   const [error, setError]           = React.useState<string | null>(null);
   const [muted, setMuted]           = React.useState(false);
 
-  const sttRef    = React.useRef<{ start:()=>void; stop:()=>void } | null>(null);
-  const answerRef = React.useRef(""); // accumulates final STT across utterances
-  const questionsRef = React.useRef<QuestionItem[]>([]); // stable ref for async access
+  const sttRef       = React.useRef<{ start:()=>void; stop:()=>void } | null>(null);
+  const answerRef    = React.useRef("");
+  const questionsRef = React.useRef<QuestionItem[]>([]);
 
-  // ── Typewriter for question ──────────────────────────────────────────────
+  // ── Typewriter ──
   React.useEffect(() => {
     if (!currentQ) return;
     setDisplayedQ("");
@@ -325,9 +138,7 @@ export default function MockInterview() {
     return () => clearInterval(iv);
   }, [currentQ]);
 
-  // ── Ask a specific question by index (no more Gemini calls after boot) ────
   async function askQuestion(idx: number, qs: QuestionItem[]) {
-    console.log("askQuestion called:", idx, qs[idx]?.question);
     const q = qs[idx];
     if (!q) return;
 
@@ -339,13 +150,9 @@ export default function MockInterview() {
     answerRef.current = "";
 
     try {
-      // 1. Speak via ElevenLabs
       setPhase("speaking");
       await speakText(q.question);
-      console.log("speakText called for:", q.question);
 
-
-      // 2. Listen via STT
       setPhase("listening");
       sttRef.current = createSTT(
         (text, isFinal) => {
@@ -357,9 +164,7 @@ export default function MockInterview() {
             setLive(text);
           }
         },
-        () => {
-          // STT ended naturally — user clicks Done to advance
-        }
+        () => {}
       );
       sttRef.current.start();
     } catch (e: any) {
@@ -379,9 +184,7 @@ export default function MockInterview() {
     setPhase("processing");
 
     const nextIdx = qIndex + 1;
-
     if (nextIdx >= questionsRef.current.length) {
-      // All done — go to feedback
       setPhase("done");
       setTimeout(() => navigate("/mock-feedback", { state: { history: updated } }), 800);
     } else {
@@ -390,128 +193,153 @@ export default function MockInterview() {
     }
   }
 
-  // ── Boot: ONE Gemini call to load all questions, then start ───────────────
-  // ── WITH this block ───────────────────────────────────────────────────────
-const hasBooted = React.useRef(false); // add this line above the useEffect
+  const hasBooted = React.useRef(false);
+  React.useEffect(() => {
+    if (hasBooted.current) return;
+    hasBooted.current = true;
 
-React.useEffect(() => {
-  if (hasBooted.current) return;  // ← blocks StrictMode's second call
-  hasBooted.current = true;
+    setPhase("generating");
+    generateAllQuestions(TOTAL_QUESTIONS)
+      .then((qs) => {
+        setQuestions(qs);
+        questionsRef.current = qs;
+        askQuestion(0, qs);
+      })
+      .catch((e: any) => {
+        setError(e?.message ?? "Failed to load questions");
+        setPhase("processing");
+      });
+    return () => { sttRef.current?.stop(); };
+  }, []);
 
-  setPhase("generating");
-  generateAllQuestions(TOTAL_QUESTIONS)
-    .then((qs) => {
-      setQuestions(qs);
-      questionsRef.current = qs;
-      askQuestion(0, qs);
-    })
-    .catch((e: any) => {
-      setError(e?.message ?? "Failed to load questions");
-      setPhase("processing");
-    });
-  return () => { sttRef.current?.stop(); };
-}, []);
-
-  // ── Derived ───────────────────────────────────────────────────────────────
-  const questionNumber  = qIndex + 1;
-  const progressPct     = Math.round((qIndex / TOTAL_QUESTIONS) * 100);
-  const aiSpeaking      = phase === "speaking";
-  const userSpeaking    = phase === "listening";
+  // ── Derived ──
+  const questionNumber = qIndex + 1;
+  const progressPct    = Math.round((qIndex / TOTAL_QUESTIONS) * 100);
+  const aiSpeaking     = phase === "speaking";
+  const userSpeaking   = phase === "listening";
 
   function phaseLabel() {
-    if (phase === "generating")  return { cls:"loading",   icon:"⟳", text:"Loading all questions…" };
-    if (phase === "speaking")    return { cls:"speaking",  icon:"🔊", text:"AI is speaking…" };
-    if (phase === "listening")   return { cls:"listening", icon:"🎙️", text:"Recording your answer — click Done when finished" };
-    if (phase === "processing")  return { cls:"loading",   icon:"⟳", text:"Processing…" };
-    if (phase === "done")        return { cls:"done",      icon:"✅", text:"Interview complete! Generating feedback…" };
+    if (phase === "generating")  return { cls: "loading",   icon: "⟳", text: "Loading all questions…" };
+    if (phase === "speaking")    return { cls: "speaking",  icon: "🔊", text: "AI is speaking…" };
+    if (phase === "listening")   return { cls: "listening", icon: "🎙️", text: "Recording your answer — click Done when finished" };
+    if (phase === "processing")  return { cls: "loading",   icon: "⟳", text: "Processing…" };
+    if (phase === "done")        return { cls: "done",       icon: "✅", text: "Interview complete! Generating feedback…" };
     return null;
   }
 
   const banner = phaseLabel();
 
+  // Banner color map
+  const bannerColors: Record<string, string> = {
+    loading:   "bg-[rgba(124,140,240,0.07)] border-[rgba(124,140,240,0.2)] text-[rgba(124,140,240,0.85)]",
+    speaking:  "bg-[rgba(124,240,200,0.07)] border-[rgba(124,240,200,0.2)] text-[rgba(124,240,200,0.85)]",
+    listening: "bg-[rgba(248,113,113,0.07)] border-[rgba(248,113,113,0.2)] text-[rgba(248,113,113,0.85)]",
+    done:      "bg-[rgba(251,191,36,0.07)]  border-[rgba(251,191,36,0.2)]  text-[rgba(251,191,36,0.85)]",
+  };
+
   return (
     <>
       <style>{styles}</style>
-      <div className="mi-root">
-        {/* Header */}
-        <header className="mi-header">
-          <div className="mi-logo">prep<em>AI</em> · interview</div>
 
-          <div className="mi-progress-wrap">
-            <div className="mi-progress-track">
-              <div className="mi-progress-fill" style={{ width: `${progressPct}%` }} />
-            </div>
-            <div className="mi-q-counter">Q{Math.min(questionNumber, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}</div>
+      {/* Root */}
+      <div className="mi-grid-bg font-sora relative flex flex-col min-h-screen bg-[#0a0a0f] text-[#e8e8f0] overflow-hidden">
+
+        {/* ── Header ── */}
+        <header className="relative z-10 flex flex-wrap items-center justify-between gap-3 px-7 py-4 border-b border-white/[0.06] bg-[rgba(10,10,15,0.9)] backdrop-blur-md">
+          {/* Logo */}
+          <div className="font-mono text-xs tracking-widest uppercase text-white/35">
+            prep<span className="text-[#7cf0c8] not-italic">AI</span> · interview
           </div>
 
-          <div className="live-badge">
-            <span className="live-dot" />
+          {/* Progress */}
+          <div className="flex items-center gap-2.5 flex-1 max-w-xs mx-auto">
+            <div className="flex-1 h-[3px] rounded-full bg-white/[0.07] overflow-hidden">
+              <div className="progress-fill h-full rounded-full" style={{ width: `${progressPct}%` }} />
+            </div>
+            <div className="font-mono text-[10px] text-white/30 tracking-wide whitespace-nowrap">
+              Q{Math.min(questionNumber, TOTAL_QUESTIONS)}/{TOTAL_QUESTIONS}
+            </div>
+          </div>
+
+          {/* Live badge */}
+          <div className="flex items-center gap-1.5 font-mono text-[10px] tracking-wide uppercase text-white/40">
+            <span className="animate-pulse-dot w-[7px] h-[7px] rounded-full bg-red-400 inline-block" />
             Live
           </div>
 
-          <button className="btn-exit" onClick={() => { sttRef.current?.stop(); navigate("/dashboard"); }}>
+          {/* Exit */}
+          <button
+            onClick={() => { sttRef.current?.stop(); navigate("/dashboard"); }}
+            className="font-mono text-[11px] tracking-wide uppercase px-4 py-[7px] rounded-lg border border-white/10 bg-transparent text-white/30 cursor-pointer transition-all hover:border-white/20 hover:text-white/60"
+          >
             ← Exit
           </button>
         </header>
 
-        {/* Body */}
-        <main className="mi-body">
+        {/* ── Body ── */}
+        <main className="relative z-[1] flex-1 flex flex-col gap-[18px] px-7 py-6 max-w-[1100px] w-full mx-auto">
 
-          {/* Video cards */}
-          <div className="video-row">
-            {/* AI */}
-            <div className={`v-card ${aiSpeaking ? "speaking" : ""}`}>
-              <div className="v-inner">
-                <div className={`avatar-ring ai ${aiSpeaking ? "speaking" : ""}`}>
-                  <div className="ring-pulse r1" />
-                  <div className="ring-pulse r2" />
+          {/* ── Video row ── */}
+          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+
+            {/* AI card */}
+            <div className={`v-card relative rounded-[20px] overflow-hidden bg-[#0e0e18] border border-white/[0.07] aspect-[16/10] flex items-center justify-center transition-shadow duration-400 ${aiSpeaking ? "speaking glow-ai" : ""}`}>
+              <div className="flex flex-col items-center gap-3">
+                <div className={`avatar-ai relative w-[68px] h-[68px] rounded-full flex items-center justify-center text-[30px]`}>
+                  <div className="ring-pulse r1 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
+                  <div className="ring-pulse r2 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
                   🤖
                 </div>
-                <div className="v-label">AI Interviewer</div>
+                <div className="font-mono text-[10px] tracking-widest uppercase text-white/30">AI Interviewer</div>
               </div>
-              <div className="v-nametag">
-                <span className="v-dot" style={{ background:"#7cf0c8" }} />
+              {/* Nametag */}
+              <div className="absolute bottom-3 left-3 font-mono text-[10px] tracking-[0.07em] px-[11px] py-1 rounded-lg bg-black/60 backdrop-blur border border-white/[0.07] text-white/55 flex items-center gap-1.5">
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0 bg-[#7cf0c8]" />
                 Aria · AI
               </div>
-              <div className={`v-status ${aiSpeaking ? "active" : ""}`}>
+              {/* Status */}
+              <div className={`absolute top-3 right-3 font-mono text-[10px] px-2.5 py-1 rounded-full bg-black/55 border transition-all duration-300 tracking-[0.06em] ${aiSpeaking ? "text-[#7cf0c8] border-[rgba(124,240,200,0.3)]" : "border-white/[0.07] text-white/40"}`}>
                 {aiSpeaking ? "Speaking" : phase === "generating" ? "Thinking…" : "Idle"}
               </div>
             </div>
 
-            {/* User */}
-            <div className={`v-card user-card ${userSpeaking ? "speaking" : ""}`}>
-              <div className="v-inner">
-                <div className={`avatar-ring user ${userSpeaking ? "speaking" : ""}`}>
-                  <div className="ring-pulse r1" />
-                  <div className="ring-pulse r2" />
+            {/* User card */}
+            <div className={`v-card user-card relative rounded-[20px] overflow-hidden bg-[#0e0e18] border border-white/[0.07] aspect-[16/10] flex items-center justify-center transition-shadow duration-400 ${userSpeaking ? "speaking glow-user" : ""}`}>
+              <div className="flex flex-col items-center gap-3">
+                <div className="avatar-user relative w-[68px] h-[68px] rounded-full flex items-center justify-center text-[30px]">
+                  <div className="ring-pulse r1 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
+                  <div className="ring-pulse r2 absolute inset-[-6px] rounded-full border-[1.5px] opacity-0" />
                   🧑‍💻
                 </div>
-                <div className="v-label">You</div>
+                <div className="font-mono text-[10px] tracking-widest uppercase text-white/30">You</div>
               </div>
-              <div className="v-nametag">
-                <span className="v-dot" style={{ background:"#a78bfa" }} />
+              {/* Nametag */}
+              <div className="absolute bottom-3 left-3 font-mono text-[10px] tracking-[0.07em] px-[11px] py-1 rounded-lg bg-black/60 backdrop-blur border border-white/[0.07] text-white/55 flex items-center gap-1.5">
+                <span className="w-[6px] h-[6px] rounded-full flex-shrink-0 bg-[#a78bfa]" />
                 You
               </div>
-              <div className={`v-status ${userSpeaking ? "recording" : ""}`}>
+              {/* Status */}
+              <div className={`absolute top-3 right-3 font-mono text-[10px] px-2.5 py-1 rounded-full bg-black/55 border transition-all duration-300 tracking-[0.06em] ${userSpeaking ? "text-red-400 border-red-400/30" : "border-white/[0.07] text-white/40"}`}>
                 {userSpeaking ? "● Recording" : "Waiting"}
               </div>
             </div>
           </div>
 
-          {/* State banner */}
+          {/* ── State banner ── */}
           {banner && (
-            <div className={`state-banner ${banner.cls}`}>
-              <span className={banner.icon === "⟳" ? "spin" : ""}>{banner.icon}</span>
+            <div className={`animate-fade-up flex items-center gap-2.5 px-[18px] py-3 rounded-xl text-xs border ${bannerColors[banner.cls] ?? ""}`}>
+              <span className={banner.icon === "⟳" ? "animate-spin-slow" : ""}>{banner.icon}</span>
               <span>{error || banner.text}</span>
             </div>
           )}
 
-          {/* Subtitle */}
-          <div className="subtitle-box">
-            <div className="sub-meta">
-              <span className="sub-label">Live transcript</span>
+          {/* ── Subtitle box ── */}
+          <div className="subtitle-bar relative rounded-2xl bg-[#0e0e18] border border-white/[0.07] px-6 py-5 min-h-[100px] flex flex-col gap-2.5 overflow-hidden">
+            {/* Meta row */}
+            <div className="flex items-center justify-between">
+              <span className="font-mono text-[10px] tracking-[0.14em] uppercase text-white/20">Live transcript</span>
               {currentQ && (
-                <span className={`sub-speaker ${phase === "listening" ? "user" : "ai"}`}>
+                <span className={`font-mono text-[10px] tracking-[0.08em] px-2.5 py-[3px] rounded-full ${phase === "listening" ? "text-[#a78bfa] bg-[rgba(167,139,250,0.08)] border border-[rgba(167,139,250,0.2)]" : "text-[#7cf0c8] bg-[rgba(124,240,200,0.08)] border border-[rgba(124,240,200,0.2)]"}`}>
                   {phase === "listening" ? "You" : "Aria · AI"}
                 </span>
               )}
@@ -519,47 +347,49 @@ React.useEffect(() => {
 
             {/* AI question (typewriter) */}
             {(phase === "speaking" || phase === "listening" || phase === "processing" || phase === "done") && displayedQ ? (
-              <div className="sub-text">
-                {displayedQ}{typingQ && <span className="cursor" />}
+              <div className="flex items-center text-[15px] leading-[1.65] text-white/[0.82] min-h-[48px]">
+                {displayedQ}{typingQ && <span className="animate-blink inline-block w-[2px] h-[1em] bg-[#7cf0c8] ml-[3px] align-middle rounded-[1px]" />}
               </div>
             ) : phase === "generating" ? (
-              <div className="sub-text idle">Generating your question…</div>
+              <div className="flex items-center text-[13px] min-h-[48px] text-white/20 italic">Generating your question…</div>
             ) : (
-              <div className="sub-text idle">Waiting…</div>
+              <div className="flex items-center text-[13px] min-h-[48px] text-white/20 italic">Waiting…</div>
             )}
 
             {/* User live transcript */}
             {phase === "listening" && (finalAnswer || liveTranscript) && (
-              <div className="sub-interim">
-                {finalAnswer && <span style={{ color:"rgba(167,139,250,0.75)", fontStyle:"normal" }}>{finalAnswer} </span>}
+              <div className="text-[13px] text-[rgba(167,139,250,0.5)] italic mt-1">
+                {finalAnswer && <span className="text-[rgba(167,139,250,0.75)] not-italic">{finalAnswer} </span>}
                 {liveTranscript && <span>{liveTranscript}</span>}
               </div>
             )}
           </div>
 
-          {/* Controls */}
-          <div className="mi-controls">
+          {/* ── Controls ── */}
+          <div className="flex items-center justify-center gap-3 pb-1.5">
+            {/* Mic / mute */}
             <button
-              className={`ctrl ctrl-mic ${phase === "listening" ? "recording" : ""}`}
-              title={muted ? "Unmute" : "Mute"}
               onClick={() => setMuted(v => !v)}
+              title={muted ? "Unmute" : "Mute"}
+              className={`w-12 h-12 rounded-full flex items-center justify-center text-lg border border-white/10 bg-white/[0.04] cursor-pointer transition-all hover:bg-white/[0.09] hover:scale-105 ${phase === "listening" ? "animate-mic-pulse bg-[rgba(248,113,113,0.15)] border-[rgba(248,113,113,0.35)]" : ""}`}
             >
               {muted ? "🔇" : "🎤"}
             </button>
 
             {/* Done answering */}
             <button
-              className="ctrl-skip"
               disabled={phase !== "listening"}
               onClick={handleDoneAnswering}
+              className="font-mono text-[11px] tracking-[0.08em] px-5 py-2.5 rounded-xl border border-white/10 bg-transparent text-white/40 cursor-pointer transition-all hover:border-white/20 hover:text-white/70 disabled:opacity-30 disabled:cursor-not-allowed"
             >
               {qIndex + 1 >= TOTAL_QUESTIONS ? "Finish interview →" : "Done answering →"}
             </button>
 
+            {/* End session */}
             <button
-              className="ctrl ctrl-end"
-              title="End session"
               onClick={() => { sttRef.current?.stop(); navigate("/dashboard"); }}
+              title="End session"
+              className="w-14 h-14 rounded-full flex items-center justify-center text-xl border border-red-400/30 bg-[rgba(248,113,113,0.12)] cursor-pointer transition-all hover:bg-[rgba(248,113,113,0.25)] hover:border-red-400/55"
             >
               📵
             </button>
