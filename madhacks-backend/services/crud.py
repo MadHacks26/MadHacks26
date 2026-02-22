@@ -136,7 +136,7 @@ def extract_urls_and_update_db(
         if url not in existing_urls
     ]
 
-    existing_urls_list = [{"url": url, "checked": checked} for url, checked in existing_urls.keys()]
+    existing_urls_list = [{"url": url, "checked": checked} for url, checked in existing_urls.items()]
 
     updated_urls = existing_urls_list + new_entries
 

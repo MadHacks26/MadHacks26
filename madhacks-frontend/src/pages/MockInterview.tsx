@@ -217,9 +217,9 @@ export default function MockInterview() {
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
             MOCK INTERVIEW
           </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-white">
+          {/* <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-white">
             Before we begin, verify your setup.
-          </h1>
+          </h1> */}
           {/* <header className="flex items-center justify-between gap-4 px-6 py-4 border-b-2 border-[#202026] bg-black">
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
             MOCK INTERVIEW

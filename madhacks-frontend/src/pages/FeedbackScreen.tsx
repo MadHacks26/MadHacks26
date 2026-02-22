@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import {
   type QAPair,
   type FeedbackResult,
+  generateFeedback
 } from "../lib/interviewEngine";
 
 const styles = `
@@ -55,6 +56,9 @@ export default function FeedbackScreen() {
   const [feedback, setFeedback] = React.useState<FeedbackResult | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [expanded, setExpanded] = React.useState<number | null>(0);
+  // const [loading,  setLoading]  = React.useState(true);
+  const [error,    setError]    = React.useState<string | null>(null);
+ 
 
   React.useEffect(() => {
     if (!history.length) {
@@ -119,6 +123,10 @@ export default function FeedbackScreen() {
       setLoading(false);
       return;
     }
+    generateFeedback(history)
+    .then((f) => { setFeedback(f); setLoading(false); })
+    .catch((e) => { setError(e?.message ?? "Failed to generate feedback"); setLoading(false); });
+  // }, []);
   }, [history]);
 
   function handleTryAgain() {
@@ -128,6 +136,8 @@ export default function FeedbackScreen() {
   function handleRoadmap() {
     navigate("/roadmap");
   }
+
+
 
   return (
     <>
