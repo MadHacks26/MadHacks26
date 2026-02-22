@@ -12,24 +12,24 @@ interface Check {
 }
 
 function statusRowCls(s: CheckStatus) {
-  if (s === "ok")   return "flex items-center gap-3 px-4 py-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 cursor-pointer select-none transition-all";
-  if (s === "warn") return "flex items-center gap-3 px-4 py-3 rounded-2xl border border-amber-400/20 bg-amber-400/5 cursor-pointer select-none transition-all";
-  if (s === "err")  return "flex items-center gap-3 px-4 py-3 rounded-2xl border border-red-400/20 bg-red-400/5 cursor-pointer select-none transition-all";
-  return "flex items-center gap-3 px-4 py-3 rounded-2xl border border-neutral-800 bg-neutral-800/30 cursor-pointer select-none transition-all hover:border-neutral-700/60 hover:bg-neutral-800/50";
+  if (s === "ok")   return "flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#7aecc4]/20 bg-[#7aecc4]/5 cursor-pointer select-none transition-all";
+  if (s === "warn") return "flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-amber-500/20 bg-amber-500/5 cursor-pointer select-none transition-all";
+  if (s === "err")  return "flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-600/20 bg-red-600/5 cursor-pointer select-none transition-all";
+  return "flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-[#202026] bg-[#090b10] cursor-pointer select-none transition-all hover:border-[#2a2a32]";
 }
 
 function statusIconWrapCls(s: CheckStatus) {
-  if (s === "ok")   return "w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-emerald-500/10 border border-emerald-500/20 flex-shrink-0";
-  if (s === "warn") return "w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-amber-400/10 border border-amber-400/20 flex-shrink-0";
-  if (s === "err")  return "w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-red-400/10 border border-red-400/20 flex-shrink-0";
-  return "w-9 h-9 rounded-xl flex items-center justify-center text-lg bg-neutral-800/50 border border-neutral-800 flex-shrink-0";
+  if (s === "ok")   return "w-9 h-9 rounded-lg flex items-center justify-center text-base bg-[#7aecc4]/10 border-2 border-[#7aecc4]/20 flex-shrink-0";
+  if (s === "warn") return "w-9 h-9 rounded-lg flex items-center justify-center text-base bg-amber-500/10 border-2 border-amber-500/20 flex-shrink-0";
+  if (s === "err")  return "w-9 h-9 rounded-lg flex items-center justify-center text-base bg-red-600/10 border-2 border-red-600/20 flex-shrink-0";
+  return "w-9 h-9 rounded-lg flex items-center justify-center text-base bg-[#090b10] border-2 border-[#202026] flex-shrink-0";
 }
 
 function statusBadgeCls(s: CheckStatus) {
-  if (s === "ok")   return "font-mono text-[10px] tracking-wider px-2.5 py-0.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 text-emerald-400";
-  if (s === "warn") return "font-mono text-[10px] tracking-wider px-2.5 py-0.5 rounded-full border border-amber-400/25 bg-amber-400/10 text-amber-300";
-  if (s === "err")  return "font-mono text-[10px] tracking-wider px-2.5 py-0.5 rounded-full border border-red-400/25 bg-red-400/10 text-red-400";
-  return "font-mono text-[10px] tracking-wider px-2.5 py-0.5 rounded-full border border-neutral-700/50 bg-neutral-800/50 text-white/30";
+  if (s === "ok")   return "rounded-full px-2.5 py-1 text-xs font-semibold border-none bg-[#7aecc4]/10 text-[#7aecc4]";
+  if (s === "warn") return "rounded-full px-2.5 py-1 text-xs font-semibold border-none bg-amber-500/10 text-amber-400";
+  if (s === "err")  return "rounded-full px-2.5 py-1 text-xs font-semibold border-none bg-red-600/10 text-red-400";
+  return "rounded-full px-2.5 py-1 text-xs font-semibold border-none bg-[#090b10] text-neutral-500";
 }
 
 function badgeLabel(s: CheckStatus) {
@@ -39,25 +39,26 @@ function badgeLabel(s: CheckStatus) {
   return "IDLE";
 }
 
+const buttonPrimary =
+  "inline-flex items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-6 py-3 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed";
+
+const buttonGhost =
+  "inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-3 text-sm font-semibold transition hover:bg-neutral-800 active:scale-[0.99]";
+
 export default function MockPrepScreen() {
   const navigate = useNavigate();
 
-  const videoRef     = React.useRef<HTMLVideoElement>(null);
   const streamRef    = React.useRef<MediaStream | null>(null);
   const analyserRef  = React.useRef<AnalyserNode | null>(null);
   const animFrameRef = React.useRef<number>(0);
 
-  const [camEnabled, setCamEnabled] = React.useState(false);
-  const [micEnabled, setMicEnabled] = React.useState(false);
-  const [micVolume,  setMicVolume]  = React.useState<number[]>(Array(12).fill(4));
-  const [micDevices, setMicDevices] = React.useState<MediaDeviceInfo[]>([]);
-  const [camDevices, setCamDevices] = React.useState<MediaDeviceInfo[]>([]);
+  const [micEnabled,  setMicEnabled]  = React.useState(false);
+  const [micVolume,   setMicVolume]   = React.useState<number[]>(Array(12).fill(4));
+  const [micDevices,  setMicDevices]  = React.useState<MediaDeviceInfo[]>([]);
   const [selectedMic, setSelectedMic] = React.useState("");
-  const [selectedCam, setSelectedCam] = React.useState("");
 
   const [checks, setChecks] = React.useState<Check[]>([
     { id: "mic",     icon: "🎙️", name: "Microphone",    sub: "Click to test",          status: "idle" },
-    // { id: "cam",     icon: "📷", name: "Camera",         sub: "Click to preview",       status: "idle" },
     { id: "browser", icon: "🌐", name: "Browser compat", sub: "Checking…",              status: "idle" },
     { id: "network", icon: "📶", name: "Network",        sub: "Checking connectivity…", status: "idle" },
   ]);
@@ -66,10 +67,9 @@ export default function MockPrepScreen() {
     const supported = !!navigator.mediaDevices?.getUserMedia;
     updateCheck("browser", supported ? "ok" : "err", supported ? "WebRTC supported" : "Not supported");
     updateCheck("network", navigator.onLine ? "ok" : "err", navigator.onLine ? "Connected" : "No connection");
-    navigator.mediaDevices?.enumerateDevices().then((devs) => {
-      setMicDevices(devs.filter((d) => d.kind === "audioinput"));
-      setCamDevices(devs.filter((d) => d.kind === "videoinput"));
-    });
+    navigator.mediaDevices?.enumerateDevices().then((devs) =>
+      setMicDevices(devs.filter((d) => d.kind === "audioinput"))
+    );
     return () => { stopStream(); cancelAnimationFrame(animFrameRef.current); };
   }, []);
 
@@ -102,7 +102,6 @@ export default function MockPrepScreen() {
 
       const devs = await navigator.mediaDevices.enumerateDevices();
       setMicDevices(devs.filter((d) => d.kind === "audioinput"));
-      setCamDevices(devs.filter((d) => d.kind === "videoinput"));
 
       const ctx      = new AudioContext();
       const src      = ctx.createMediaStreamSource(stream);
@@ -127,36 +126,6 @@ export default function MockPrepScreen() {
     }
   }
 
-  // async function toggleCamera() {
-  //   if (camEnabled) {
-  //     streamRef.current?.getVideoTracks().forEach((t) => t.stop());
-  //     if (videoRef.current) videoRef.current.srcObject = null;
-  //     setCamEnabled(false);
-  //     updateCheck("cam", "idle", "Click to preview");
-  //     return;
-  //   }
-  //   try {
-  //     const stream = await navigator.mediaDevices.getUserMedia({
-  //       video: selectedCam ? { deviceId: { exact: selectedCam } } : true,
-  //       audio: false,
-  //     });
-      // if (videoRef.current) { videoRef.current.srcObject = stream; videoRef.current.play(); }
-      // setCamEnabled(true);
-      // updateCheck("cam", "ok", "Camera active");
-
-  //     const devs = await navigator.mediaDevices.enumerateDevices();
-  //     // setCamDevices(devs.filter((d) => d.kind === "videoinput"));
-  //     setMicDevices(devs.filter((d) => d.kind === "audioinput"));
-  //   } catch {
-  //     updateCheck("cam", "err", "Permission denied");
-  //   }
-  // }
-
-  function handleCheckClick(id: string) {
-    if (id === "mic") toggleMic();
-    // if (id === "cam") toggleCamera();
-  }
-
   const isReady   = checks.every((c) => c.status === "ok" || c.status === "warn");
   const passCount = checks.filter((c) => c.status === "ok").length;
 
@@ -167,237 +136,157 @@ export default function MockPrepScreen() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#07070d] text-[#e2e2ee] font-sans flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-black text-white">
+      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
 
-      {/* Background glows */}
-      <div className="fixed w-[600px] h-[600px] rounded-full bg-[radial-gradient(circle,rgba(124,240,200,0.055)_0%,transparent_70%)] -top-40 -left-40 pointer-events-none" />
-      <div className="fixed w-[500px] h-[500px] rounded-full bg-[radial-gradient(circle,rgba(124,140,240,0.06)_0%,transparent_70%)] -bottom-24 -right-24 pointer-events-none" />
+        {/* ── Page heading ── */}
+        <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">MOCK INTERVIEW</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-white">
+          Before we begin.
+        </h1>
+        <p className="mt-2 text-sm text-neutral-400">
+          Verify your setup, then proceed to the interview.
+        </p>
 
-      {/* Dot grid */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{ backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.06) 1px, transparent 1px)", backgroundSize: "36px 36px" }}
-      />
+        {/* ── Two-column grid ── */}
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
 
-      {/* Card */}
-      <div className="relative z-10 w-full max-w-[860px] bg-neutral-900/60 border border-neutral-700/50 rounded-[28px] backdrop-blur-xl overflow-hidden animate-[card-in_0.5s_cubic-bezier(0.22,1,0.36,1)_both]"
-        style={{ animation: "card-in 0.5s cubic-bezier(0.22,1,0.36,1) both" }}>
-
-        {/* Top accent bar */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-[#7cf0c8] via-[#7c8cf0] to-transparent" />
-
-        {/* ── Header ── */}
-        <div className="flex items-center justify-between flex-wrap gap-4 px-9 pt-8 pb-6 border-b border-neutral-800">
-          <div>
-            <div className="font-mono text-[10px] tracking-[0.18em] uppercase text-[#7cf0c8] mb-1.5">
-              Mock Interview · Setup
-            </div>
-            <div className="text-[22px] font-semibold tracking-tight text-white">
-              Before we begin <span className="text-white/30 font-light">— check your setup</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5">
-            {[
-              { label: "01 · Prep",      active: true,  done: false },
-              { label: "02 · Interview", active: false, done: false },
-              { label: "03 · Feedback",  active: false, done: false },
-            ].map((pill) => (
-              <span key={pill.label} className={[
-                "font-mono text-[10px] tracking-[0.08em] px-3 py-1 rounded-full border transition-all",
-                pill.active
-                  ? "border-[#7cf0c8]/40 text-[#7cf0c8] bg-[#7cf0c8]/7"
-                  : "border-neutral-700/50 text-white/30 bg-neutral-800/40",
-              ].join(" ")}>
-                {pill.label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Body grid ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2">
-
-          {/* LEFT — Camera + mic */}
-          <div className="p-7 md:p-9">
-            <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/30 mb-4">
+          {/* LEFT — Mic test */}
+          <div className="rounded-2xl border-2 border-[#202026] bg-black p-5">
+            <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
               Microphone Test
-            </div>
+            </p>
 
-            {/* Camera box
-            <div className="relative w-full aspect-[16/10] rounded-2xl bg-[#0e0e18] border border-neutral-700/35 overflow-hidden flex items-center justify-center flex-col gap-2.5">
-              {!camEnabled && (
-                <div className="flex flex-col items-center gap-2.5 pointer-events-none">
-                  <span className="text-4xl">📷</span>
-                  <span className="font-mono text-[11px] text-white/25 tracking-[0.08em]">Camera off</span>
-                </div>
-              )}
-              <video
-                ref={videoRef}
-                muted
-                playsInline
-                className={`absolute inset-0 w-full h-full object-cover rounded-2xl ${camEnabled ? "block" : "hidden"}`}
-              />
-              <button
-                onClick={toggleCamera}
-                title={camEnabled ? "Disable camera" : "Enable camera"}
-                className="absolute inset-0 bg-transparent border-none rounded-2xl hover:bg-[#7cf0c8]/4 transition-colors cursor-pointer"
-              />
-              <div className="absolute bottom-2.5 left-2.5 font-mono text-[10px] px-2.5 py-1 rounded-lg bg-black/60 border border-neutral-700/35 text-white/50 tracking-[0.06em]">
-                {camEnabled ? "● Live" : "Paused"}
-              </div>
-            </div> */}
-
-            {/* Mic visualiser */}
-            <div className="mt-4 h-8 flex items-end justify-center gap-1">
+            {/* Visualiser */}
+            <div className="h-10 flex items-end justify-center gap-1 rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-2 mb-4">
               {micEnabled
                 ? micVolume.map((h, i) => (
                     <div
                       key={i}
-                      className="w-1 rounded-[3px] bg-[#7cf0c8] transition-all duration-100"
+                      className="w-1 rounded-sm bg-[#7aecc4] transition-all duration-100"
                       style={{ height: h, opacity: 0.6 + (h / 28) * 0.4 }}
                     />
                   ))
-                : (
-                  <span className="font-mono text-[10px] text-white/20 tracking-[0.08em]">
-                    Enable mic to see audio levels
-                  </span>
-                )
+                : <span className="text-xs text-neutral-600">Enable mic to see levels</span>
               }
             </div>
 
-            {/* Device selectors */}
-            <div className="flex flex-col gap-2.5 mt-5">
-              {[
-                { label: "Microphone", value: selectedMic, setter: setSelectedMic, devices: micDevices, defaultLabel: "Default microphone" },
-                // { label: "Camera",     value: selectedCam, setter: setSelectedCam, devices: camDevices, defaultLabel: "Default camera" },
-              ].map((row) => (
-                <div key={row.label} className="flex flex-col gap-1">
-                  <div className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/30">{row.label}</div>
-                  <select
-                    className="w-full bg-neutral-800/50 border border-neutral-700/50 rounded-xl px-3.5 py-2.5 text-white/75 text-xs outline-none cursor-pointer transition-all appearance-none hover:border-[#7cf0c8]/30 hover:bg-[#7cf0c8]/4 focus:border-[#7cf0c8]/30"
-                    value={row.value}
-                    onChange={(e) => row.setter(e.target.value)}
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: "no-repeat",
-                      backgroundPosition: "right 12px center",
-                      paddingRight: 34,
-                    }}
-                  >
-                    <option value="">{row.defaultLabel}</option>
-                    {row.devices.map((d) => (
-                      <option key={d.deviceId} value={d.deviceId} style={{ background: "#111118", color: "#e2e2ee" }}>
-                        {d.label || `${row.label} ${d.deviceId.slice(0, 6)}`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+            {/* Mic device selector */}
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">Device</p>
+            <select
+              className="w-full bg-[#090b10] border-2 border-[#202026] rounded-xl px-3 py-2.5 text-white text-sm outline-none cursor-pointer transition-all appearance-none hover:border-[#7aecc4]/30 focus:border-[#7aecc4]/40"
+              value={selectedMic}
+              onChange={(e) => setSelectedMic(e.target.value)}
+              style={{
+                backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "right 12px center",
+                paddingRight: 34,
+              }}
+            >
+              <option value="">Default microphone</option>
+              {micDevices.map((d) => (
+                <option key={d.deviceId} value={d.deviceId} style={{ background: "#090b10" }}>
+                  {d.label || `Microphone ${d.deviceId.slice(0, 6)}`}
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          {/* RIGHT — Checks + info */}
-          <div className="p-7 md:p-9 border-t md:border-t-0 md:border-l border-neutral-800">
-            <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/30 mb-4">
-              System checks
-            </div>
+          {/* RIGHT — System checks */}
+          <div className="rounded-2xl border-2 border-[#202026] bg-black p-5">
+            <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
+              System Checks
+            </p>
 
-            <div className="flex flex-col gap-3 mb-5">
+            <div className="flex flex-col gap-2.5">
               {checks.map((c) => (
                 <div
                   key={c.id}
                   className={statusRowCls(c.status)}
-                  onClick={() => handleCheckClick(c.id)}
+                  onClick={() => { if (c.id === "mic") toggleMic(); }}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === "Enter" && handleCheckClick(c.id)}
+                  onKeyDown={(e) => e.key === "Enter" && c.id === "mic" && toggleMic()}
                 >
                   <div className={statusIconWrapCls(c.status)}>{c.icon}</div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium text-white/85">{c.name}</div>
-                    <div className="font-mono text-[10px] text-white/30 mt-0.5 tracking-[0.04em]">{c.sub}</div>
+                    <div className="text-sm font-semibold text-white">{c.name}</div>
+                    <div className="text-xs text-neutral-500 mt-0.5">{c.sub}</div>
                   </div>
                   <span className={statusBadgeCls(c.status)}>{badgeLabel(c.status)}</span>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
 
-            {/* Interview details */}
-            <div className="font-mono text-[10px] tracking-[0.16em] uppercase text-white/30 mb-3 mt-5">
-              Interview details
-            </div>
-            <div className="flex flex-wrap gap-2 mb-5">
-              {[
-                { label: "~30 min",       color: "#7cf0c8" },
-                { label: "Technical · DSA", color: "#7c8cf0" },
-                { label: "5 questions",   color: "#f0c87c" },
-                { label: "AI interviewer", color: "#f07ca0" },
-              ].map((chip) => (
-                <div key={chip.label} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-neutral-700/50 bg-neutral-800/40 text-xs text-white/60">
-                  <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: chip.color }} />
-                  {chip.label}
-                </div>
-              ))}
-            </div>
+        {/* ── Interview details ── */}
+        <div className="mt-5 rounded-2xl border-2 border-[#202026] bg-black p-5">
+          <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
+            Interview Details
+          </p>
 
-            {/* Tips */}
-            <div className="p-4 rounded-2xl border border-neutral-800 bg-neutral-800/30">
-              <div className="font-mono text-[10px] tracking-[0.12em] uppercase text-white/25 mb-2">Tips</div>
-              {tips.map((tip, i) => (
-                <div key={i} className={`flex gap-2.5 text-xs text-white/45 leading-relaxed ${i < tips.length - 1 ? "mb-2" : ""}`}>
-                  <span className="text-[#7cf0c8] font-mono flex-shrink-0">{String(i + 1).padStart(2, "0")}</span>
-                  {tip}
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-5">
+            {[
+              { label: "Duration",    value: "~30 min"       },
+              { label: "Format",      value: "Technical · DSA" },
+              { label: "Questions",   value: "5 total"       },
+              { label: "Interviewer", value: "AI voice"      },
+            ].map((item) => (
+              <div key={item.label} className="rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-3">
+                <p className="text-xs text-neutral-500 font-semibold uppercase tracking-wide">{item.label}</p>
+                <p className="mt-1 text-sm font-semibold text-white">{item.value}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-3">Tips</p>
+          <div className="flex flex-col gap-2">
+            {tips.map((tip, i) => (
+              <div key={i} className="flex gap-3 text-sm text-neutral-400">
+                <span className="text-[#7aecc4] font-semibold flex-shrink-0">{String(i + 1).padStart(2, "0")}</span>
+                {tip}
+              </div>
+            ))}
           </div>
         </div>
 
         {/* ── Readiness banner ── */}
         <div className={[
-          "mx-9 mb-5 px-4 py-3 rounded-2xl flex items-center gap-3 text-xs border",
+          "mt-5 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm font-medium border-2",
           isReady
-            ? "bg-[#7cf0c8]/7 border-[#7cf0c8]/20 text-[#7cf0c8]/85"
-            : "bg-amber-400/6 border-amber-300/50 text-amber-300/80",
+            ? "border-[#7aecc4]/20 bg-[#7aecc4]/5 text-[#7aecc4]"
+            : "border-[#202026] bg-[#090b10] text-neutral-400",
         ].join(" ")}>
-          <span className="text-base">{isReady ? "✅" : "⚠️"}</span>
+          <span>{isReady ? "✅" : "⚠️"}</span>
           <span>
             {isReady
               ? "All checks passed — you're good to go!"
-              : "Enable your mic, then verify all checks are green before proceeding."}
+              : "Enable your mic and verify all checks pass before proceeding."}
           </span>
         </div>
 
         {/* ── Footer ── */}
-        <div className="flex items-center justify-between flex-wrap gap-4 px-9 py-6 border-t border-neutral-800">
-          <div className="font-mono text-[10px] text-white/20 tracking-[0.06em]">
-            Checks: <span className="text-[#7cf0c8]/50">{passCount}</span>/{checks.length} passed
-          </div>
+        <div className="mt-6 flex items-center justify-between">
+          <p className="text-xs text-neutral-600 font-semibold">
+            {passCount}/{checks.length} checks passed
+          </p>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/roadmap")}
-              className="font-mono text-[11px] tracking-[0.08em] uppercase px-5 py-2.5 rounded-xl border border-neutral-700/50 bg-transparent text-white/40 cursor-pointer transition-all hover:border-neutral-700/60 hover:text-white/70 hover:bg-neutral-800/50"
-            >
-              Cancel
+            <button className={buttonGhost} onClick={() => navigate("/roadmap")}>
+              Back
             </button>
             <button
+              className={buttonPrimary}
               disabled={!isReady}
               onClick={() => navigate("/mock-interview/session")}
-              className="flex items-center gap-2 text-[13px] font-semibold px-7 py-3 rounded-2xl border-none bg-gradient-to-br from-[#7cf0c8] to-[#5ad4a8] text-[#07140f] cursor-pointer transition-all hover:-translate-y-px hover:shadow-[0_8px_32px_rgba(124,240,200,0.2)] disabled:opacity-40 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
             >
-              Proceed to interview
-              <span className="text-base transition-transform group-hover:translate-x-1">→</span>
+              Proceed to interview →
             </button>
           </div>
         </div>
-      </div>
 
-      <style>{`
-        @keyframes card-in {
-          from { opacity: 0; transform: translateY(24px) scale(0.98); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
+      </div>
     </div>
   );
 }
