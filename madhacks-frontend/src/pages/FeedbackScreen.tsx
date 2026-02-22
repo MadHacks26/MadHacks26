@@ -57,7 +57,7 @@ export default function FeedbackScreen() {
   const [loading, setLoading] = React.useState(true);
   const [expanded, setExpanded] = React.useState<number | null>(0);
   // const [loading,  setLoading]  = React.useState(true);
-  const [error,    setError]    = React.useState<string | null>(null);
+  // const [error,    setError]    = React.useState<string | null>(null);
  
 
   React.useEffect(() => {
@@ -125,7 +125,7 @@ export default function FeedbackScreen() {
     }
     generateFeedback(history)
     .then((f) => { setFeedback(f); setLoading(false); })
-    .catch((e) => { setError(e?.message ?? "Failed to generate feedback"); setLoading(false); });
+    .catch((e) => { console.log(e); setLoading(false); });
   // }, []);
   }, [history]);
 
