@@ -140,10 +140,12 @@ async function fetchUserRoadmaps(
 }
 
 async function putItem(params: { url: string; checked: boolean }, token: any) {
-  
   const r = await fetch(apiUrl("/roadmap/putitem"), {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
 
     body: JSON.stringify(params),
   });
@@ -347,12 +349,6 @@ export default function Roadmap() {
             <p className="text-sm font-semibold text-neutral-400">
               Nothing to show yet.
             </p>
-            <button
-              onClick={() => navigate("/")}
-              className="inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-800 active:scale-[0.99]"
-            >
-              Home
-            </button>
           </div>
         )}
 
