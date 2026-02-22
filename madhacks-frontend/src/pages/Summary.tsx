@@ -26,8 +26,8 @@ function safeParseRoadmapSummary(): SummaryShape | null {
   try {
     const raw = localStorage.getItem(ROADMAP_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as RoadmapResponseShape;
 
+    const parsed = JSON.parse(raw) as RoadmapResponseShape;
     if (!parsed?.summary) return null;
 
     const s = parsed.summary;
@@ -56,9 +56,11 @@ export default function Summary() {
     const stored = safeParseRoadmapSummary();
     if (stored) return stored;
 
+    // fallback (only if nothing in localStorage yet)
     return {
       major_focus_areas: {
-        Arrays: "High importance and low confidence; focus on Two-Pointers and O(N) solutions.",
+        Arrays:
+          "High importance and low confidence; focus on Two-Pointers and O(N) solutions.",
         OS: "Highest importance and low confidence; focus on Process/Memory/Concurrency theory.",
         Stacks:
           "High importance and low confidence; focus on advanced structures like Monotonic Stack.",
@@ -67,8 +69,8 @@ export default function Summary() {
         Hashing:
           "Medium/High importance; focus on collision resolution and prefix-sum patterns.",
       },
-      total_study_resources: 8,
-      total_leetcode_problems: 11,
+      total_study_resources: 0,
+      total_leetcode_problems: 0,
     };
   });
 
@@ -81,7 +83,6 @@ export default function Summary() {
   return (
     <div className={pageWrap}>
       <div className={container}>
-
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-xs font-semibold tracking-wide text-neutral-500">
@@ -96,30 +97,12 @@ export default function Summary() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className={`${card} p-5`}>
-            <p className="text-xs font-semibold text-neutral-500">STUDY RESOURCES</p>
-            <div className="mt-2 flex items-end justify-between">
-              <p className="text-3xl font-semibold tracking-tight">
-                {summary.total_study_resources}
-              </p>
-            </div>
-          </div>
-
-          <div className={`${card} p-5`}>
-            <p className="text-xs font-semibold text-neutral-500">LEETCODE PROBLEMS</p>
-            <div className="mt-2 flex items-end justify-between">
-              <p className="text-3xl font-semibold tracking-tight">
-                {summary.total_leetcode_problems}
-              </p>
-            </div>
-          </div>
-        </div>
-
         <div className="mt-6">
           <div className={`${card} overflow-hidden`}>
             <div className="border-b border-neutral-200 bg-neutral-50 px-5 py-4">
-              <h2 className="text-sm font-semibold text-neutral-900">Major focus areas</h2>
+              <h2 className="text-sm font-semibold text-neutral-900">
+                Major focus areas
+              </h2>
             </div>
 
             <div className="p-5">
@@ -135,7 +118,9 @@ export default function Summary() {
                       </div>
 
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-neutral-900">{topic}</p>
+                        <p className="text-sm font-semibold text-neutral-900">
+                          {topic}
+                        </p>
                         <p className="mt-1 text-sm text-neutral-600">{note}</p>
                       </div>
                     </div>
@@ -146,14 +131,26 @@ export default function Summary() {
               <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-neutral-50 p-5 sm:flex-row">
                 <div className="text-center sm:text-left">
                   <p className="text-sm font-semibold text-neutral-900">
-                    Ready to Start?
+                    Ready to start?
                   </p>
                   <p className="mt-1 text-xs text-neutral-600">
                     Your dashboard has the day-by-day checklist and progress.
                   </p>
                 </div>
-                <button className={buttonPrimary} onClick={() => navigate("/dashboard")}>
+                <button
+                  className={buttonPrimary}
+                  onClick={() => navigate("/dashboard")}
+                >
                   View my roadmap
+                </button>
+              </div>
+
+              <div className="mt-4 flex justify-center">
+                <button
+                  className="text-xs font-semibold text-neutral-700 underline decoration-neutral-300 underline-offset-4 hover:decoration-neutral-900"
+                  onClick={() => navigate("/")}
+                >
+                  Start over
                 </button>
               </div>
             </div>

@@ -21,18 +21,17 @@ type RoadmapDay = {
   checklist?: RoadmapChecklistItem[];
 };
 
-// type RoadmapObjectShape = {
-//   company?: string;
-//   role?: string;
-//   total_days?: number;
-//   daily_hours?: number;
-//   roadmap?: RoadmapDay[];
-//   summary?: any;
-// };
+type SummaryShape = {
+  major_focus_areas: Record<string, string>;
+  total_study_resources: number;
+  total_leetcode_problems: number;
+};
 
 const pageWrap =
   "min-h-screen bg-neutral-50 text-neutral-900 selection:bg-neutral-900 selection:text-white";
 const container = "mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 sm:py-14";
+
+const card = "rounded-2xl border border-neutral-200 bg-white shadow-sm";
 
 const buttonGhost =
   "inline-flex items-center justify-center rounded-xl border border-neutral-200 bg-white px-5 py-3 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50 active:scale-[0.99]";
@@ -66,8 +65,10 @@ function difficultyPill(diff?: string) {
   if (!diff) return null;
   const d = diff.toLowerCase();
   const base = "rounded-full px-2.5 py-1 text-xs font-semibold border";
-  if (d === "easy") return `${base} border-emerald-200 bg-emerald-50 text-emerald-800`;
-  if (d === "medium") return `${base} border-amber-200 bg-amber-50 text-amber-800`;
+  if (d === "easy")
+    return `${base} border-emerald-200 bg-emerald-50 text-emerald-800`;
+  if (d === "medium")
+    return `${base} border-amber-200 bg-amber-50 text-amber-800`;
   if (d === "hard") return `${base} border-rose-200 bg-rose-50 text-rose-800`;
   return `${base} border-neutral-200 bg-neutral-50 text-neutral-700`;
 }
@@ -84,34 +85,33 @@ function isValidDay(x: any): x is RoadmapDay {
 function normalizeRoadmapFromStorage(raw: string | null): {
   obj: any;
   days: RoadmapDay[];
+  summary: SummaryShape | null;
 } {
-  if (!raw) return { obj: null, days: [] };
+  if (!raw) return { obj: null, days: [], summary: null };
 
   let parsed: any = null;
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { obj: raw, days: [] };
+    return { obj: raw, days: [], summary: null };
   }
 
-  // Case A: full object with roadmap:[...]
   if (parsed && typeof parsed === "object" && Array.isArray(parsed.roadmap)) {
     const days = parsed.roadmap.filter(isValidDay);
-    return { obj: parsed, days };
+    const summary = parsed.summary ?? null;
+    return { obj: parsed, days, summary };
   }
 
-  // Case B: stored directly as array of days
   if (Array.isArray(parsed)) {
     const days = parsed.filter(isValidDay);
-    return { obj: parsed, days };
+    return { obj: parsed, days, summary: null };
   }
 
-  // Case C: stored as a single day object
   if (isValidDay(parsed)) {
-    return { obj: parsed, days: [parsed] };
+    return { obj: parsed, days: [parsed], summary: null };
   }
 
-  return { obj: parsed, days: [] };
+  return { obj: parsed, days: [], summary: null };
 }
 
 function sortDays(days: RoadmapDay[]) {
@@ -126,26 +126,37 @@ function isDayDone(day: RoadmapDay, checks: Record<string, boolean>) {
   return list.every((_, idx) => checks[makeTaskKey(day.day, idx)] === true);
 }
 
+function coerceSummary(x: any): SummaryShape | null {
+  if (!x || typeof x !== "object") return null;
+  if (!x.major_focus_areas || typeof x.major_focus_areas !== "object") return null;
+  if (typeof x.total_study_resources !== "number") return null;
+  if (typeof x.total_leetcode_problems !== "number") return null;
+  return x as SummaryShape;
+}
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [days, setDays] = React.useState<RoadmapDay[]>([]);
   const [checks, setChecks] = React.useState<Record<string, boolean>>({});
+  const [summary, setSummary] = React.useState<SummaryShape | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const raw = localStorage.getItem(ROADMAP_KEY);
-    const { obj, days: extracted } = normalizeRoadmapFromStorage(raw);
+    const { obj, days: extracted, summary: extractedSummary } =
+      normalizeRoadmapFromStorage(raw);
 
-    // Debug prints you asked for
     console.log("[Dashboard] ROADMAP_KEY =", ROADMAP_KEY);
     console.log("[Dashboard] raw localStorage value:", raw);
     console.log("[Dashboard] parsed object:", obj);
     console.log("[Dashboard] extracted days:", extracted);
 
+    const s = coerceSummary(extractedSummary);
+    console.log("[Dashboard] extracted summary:", s);
+    setSummary(s);
+
     if (!extracted.length) {
-      setError(
-        "No roadmap found. Generate it first (Build my roadmap), then come back here."
-      );
+      setError("No roadmap found. Generate it first, then come back here.");
       setDays([]);
     } else {
       setError(null);
@@ -159,7 +170,9 @@ export default function Dashboard() {
 
   const totalTasks = days.reduce((acc, d) => acc + (d.checklist?.length ?? 0), 0);
   const doneTasks = days.reduce((acc, d) => {
-    const doneInDay = (d.checklist ?? []).filter((_, idx) => checks[makeTaskKey(d.day, idx)]).length;
+    const doneInDay = (d.checklist ?? []).filter(
+      (_, idx) => checks[makeTaskKey(d.day, idx)]
+    ).length;
     return acc + doneInDay;
   }, 0);
   const progress = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
@@ -177,8 +190,8 @@ export default function Dashboard() {
   return (
     <div className={pageWrap}>
       <div className={container}>
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="w-full lg:max-w-xl">
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               Dashboard
             </h1>
@@ -193,7 +206,9 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between text-xs text-neutral-600">
                   <span>
                     Progress:{" "}
-                    <span className="font-semibold text-neutral-900">{progress}%</span>
+                    <span className="font-semibold text-neutral-900">
+                      {progress}%
+                    </span>
                   </span>
                   <span>
                     {doneTasks}/{totalTasks} tasks
@@ -209,35 +224,45 @@ export default function Dashboard() {
             )}
           </div>
 
-          <div className="flex items-center gap-3">
-            <button className={buttonGhost} onClick={() => navigate("/summary")}>
-              Back
-            </button>
-            <button className={buttonGhost} onClick={() => navigate("/mock-interview")}>
-              Mock
-           </button>
-            <button
-              className={buttonGhost}
-              onClick={() => {
-                saveChecks({});
-                setChecks({});
-                console.log("[Dashboard] checks reset");
-              }}
-              title="Clears completed states"
-              disabled={!days.length}
-            >
-              Reset checks
-            </button>
+          <div className="w-fit lg:max-w-xl">
+            <div className="grid grid-cols-2 gap-4">
+              <div className={`${card} p-5`}>
+                <p className="text-xs font-semibold text-neutral-500">
+                  STUDY RESOURCES
+                </p>
+                <div className="mt-2 flex items-end justify-between">
+                  <p className="text-3xl font-semibold tracking-tight">
+                    {summary ? summary.total_study_resources : "—"}
+                  </p>
+                </div>
+              </div>
+
+              <div className={`${card} p-5`}>
+                <p className="text-xs font-semibold text-neutral-500">
+                  LEETCODE PROBLEMS
+                </p>
+                <div className="mt-2 flex items-end justify-between">
+                  <p className="text-3xl font-semibold tracking-tight">
+                    {summary ? summary.total_leetcode_problems : "—"}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
         {!days.length ? (
           <div className="mt-10 rounded-2xl border border-neutral-200 bg-white p-8 text-center">
-            <p className="text-sm font-medium text-neutral-900">Nothing to show yet.</p>
+            <p className="text-sm font-medium text-neutral-900">
+              Nothing to show yet.
+            </p>
             <p className="mt-2 text-sm text-neutral-600">
               Go back to Summary and click View my roadmap after generating the plan.
             </p>
-            <button className={`${buttonGhost} mt-5`} onClick={() => navigate("/summary")}>
+            <button
+              className={`${buttonGhost} mt-5`}
+              onClick={() => navigate("/summary")}
+            >
               Back to Summary
             </button>
           </div>
@@ -257,6 +282,11 @@ export default function Dashboard() {
                         <p className="mt-1 text-xs text-neutral-600">
                           Focus: {day.focus_area || "—"}
                         </p>
+                        {typeof day.hours_allocated === "number" ? (
+                          <p className="mt-1 text-xs text-neutral-500">
+                            Hours: {day.hours_allocated}
+                          </p>
+                        ) : null}
                       </div>
 
                       {done && (
@@ -287,7 +317,9 @@ export default function Dashboard() {
                                     ? "border-neutral-900 bg-neutral-900"
                                     : "border-neutral-300 bg-white hover:bg-neutral-50",
                                 ].join(" ")}
-                                aria-label={checked ? "Mark incomplete" : "Mark complete"}
+                                aria-label={
+                                  checked ? "Mark incomplete" : "Mark complete"
+                                }
                               />
 
                               <div className="min-w-0 flex-1">
@@ -302,7 +334,9 @@ export default function Dashboard() {
                                   </span>
 
                                   {item.difficulty ? (
-                                    <span className={difficultyPill(item.difficulty) ?? ""}>
+                                    <span
+                                      className={difficultyPill(item.difficulty) ?? ""}
+                                    >
                                       {item.difficulty}
                                     </span>
                                   ) : null}
@@ -326,7 +360,9 @@ export default function Dashboard() {
                                 </p>
 
                                 {item.reason ? (
-                                  <p className="mt-1 text-xs text-neutral-600">{item.reason}</p>
+                                  <p className="mt-1 text-xs text-neutral-600">
+                                    {item.reason}
+                                  </p>
                                 ) : null}
 
                                 {item.url ? (
@@ -360,6 +396,36 @@ export default function Dashboard() {
             })}
           </div>
         )}
+
+        {/* BOTTOM ROW: left = back/reset, right = mock */}
+        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <button className={buttonGhost} onClick={() => navigate("/summary")}>
+              Back
+            </button>
+            <button
+              className={buttonGhost}
+              onClick={() => {
+                saveChecks({});
+                setChecks({});
+                console.log("[Dashboard] checks reset");
+              }}
+              title="Clears completed states"
+              disabled={!days.length}
+            >
+              Reset checks
+            </button>
+          </div>
+
+          <div>
+            <button
+              className={buttonGhost}
+              onClick={() => navigate("/mock-interview")}
+            >
+              Mock
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
