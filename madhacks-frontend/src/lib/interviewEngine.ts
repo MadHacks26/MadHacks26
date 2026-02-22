@@ -43,7 +43,7 @@ export async function generateAllQuestions(
 ): Promise<QuestionItem[]> {
   const prompt = `You are a senior interviewer at ${COMPANY} for the role of ${ROLE}.
 
-Based on your experience, generate the **top 5 technical interview questions** a candidate applying to ${ROLE} at ${COMPANY} is most likely to face.
+Based on your experience, generate the **top ${totalQuestions} technical interview questions** a candidate applying to ${ROLE} at ${COMPANY} is most likely to face.
 
 Rules:
 - Each question must cover a **different key concept or skill** relevant to the role.

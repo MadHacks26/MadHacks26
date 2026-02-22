@@ -6,6 +6,8 @@ import Dashboard from "./pages/Dashboard";
 import MockInterview from "./pages/MockInterview";
 import MockPrepScreen from "./pages/MockPrepScreen.tsx";
 import Auth from "./pages/Auth";
+import FeedbackScreen from "./pages/FeedbackScreen.tsx";
+
 
 export default function App() {
   return (
@@ -18,6 +20,9 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/mock-interview" element={<MockPrepScreen />} />
           <Route path="/mock-interview/session" element={<MockInterview />} />
+          <Route path="/mock-feedback"   element={<FeedbackScreen />} />
+          
+
         </Routes>
       </AuthProvider>
     </BrowserRouter>
