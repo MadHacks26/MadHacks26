@@ -1,8 +1,8 @@
 from typing import Dict, Optional
 import os
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi import FastAPI, HTTPException # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
+from pydantic import BaseModel, Field # type: ignore
 
 from llm import generate_concepts_from_prompt, generate_roadmap_from_profile
 
