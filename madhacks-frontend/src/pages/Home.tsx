@@ -1,11 +1,12 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../auth";
 import LevelSlider from "../components/LevelSlider";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
-type Step = 0 | 1 | 2 | 3 | 4;
+type Step =  1 | 2 | 3 | 4;
 
 const PROFILE_KEY = "madhacks_profile_v1";
 const ROADMAP_KEY = "madhacks_roadmap_data_v1";
@@ -15,7 +16,7 @@ function saveProfile(profile: any) {
 }
 
 function clampName(name: string) {
-  return name.trim().slice(0, 24);
+  return name.trim().split(" ")[0].slice(0, 24);
 }
 
 function syncLevelsFromKeys(
@@ -118,8 +119,8 @@ function buildConceptProfile(params: {
 
 export default function Home() {
   const navigate = useNavigate();
-
-  const [step, setStep] = React.useState<Step>(0);
+  const { user, logout } = useAuth();
+  const [step, setStep] = React.useState<Step>(1);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
     "Arrays & Strings": 1,
@@ -160,6 +161,9 @@ export default function Home() {
   );
 
   React.useEffect(() => {
+    setName(user?.displayName ?? "");
+  })
+  React.useEffect(() => {
     setDsaLevels((prev) =>
       syncLevelsFromKeys(Object.keys(dsaConcepts), prev, 5)
     );
@@ -174,7 +178,7 @@ export default function Home() {
   const safeName = clampName(name);
 
   const canGoNext =
-    (step === 0 && safeName.length >= 2) ||
+    // (step === 0 && safeName.length >= 2) ||
     (step === 1 && role.trim().length >= 2 && company.trim().length >= 2) ||
     (step === 2 &&
       parsePositiveInt(prepDays) !== null &&
@@ -373,6 +377,18 @@ export default function Home() {
 
   return (
     <div className={pageWrap}>
+      <header className="sticky top-0 z-10 flex items-center justify-end border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+        <button
+          type="button"
+          className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
+          onClick={async () => {
+            await logout();
+            navigate("/auth");
+          }}
+        >
+          Logout
+        </button>
+      </header>
       <div className={container}>
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -385,7 +401,7 @@ export default function Home() {
           </div>
 
           <div className="hidden items-center gap-2 sm:flex">
-            {[0, 1, 2, 3, 4].map((i) => {
+            {[ 1, 2, 3, 4].map((i) => {
               const active = step === i;
               const done = step > i;
               return (
@@ -408,7 +424,7 @@ export default function Home() {
         <div className={`mt-8 ${card}`}>
           <div className="p-5 sm:p-7">
             <AnimatePresence mode="wait">
-              {step === 0 && (
+              {/* {step === 0 && (
                 <motion.div
                   key="step0"
                   variants={stepVariants}
@@ -446,7 +462,7 @@ export default function Home() {
                     </button>
                   </div>
                 </motion.div>
-              )}
+              )} */}
 
               {step === 1 && (
                 <motion.div
@@ -511,7 +527,7 @@ export default function Home() {
                     <p className="mt-4 text-sm text-red-600">{conceptsError}</p>
                   )}
 
-                  <div className="mt-8 flex items-center justify-between">
+                  {/* <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={back}>
                       Back
                     </button>
@@ -522,7 +538,7 @@ export default function Home() {
                     >
                       {conceptsLoading ? "Generating..." : "Next"}
                     </button>
-                  </div>
+                  </div> */}
                 </motion.div>
               )}
 
@@ -730,7 +746,7 @@ export default function Home() {
                       </button>
                       <button
                         className={buttonGhost}
-                        onClick={() => setStep(0)}
+                        onClick={() => setStep(1)}
                         title="Start over"
                         disabled={roadmapLoading}
                       >
@@ -753,8 +769,8 @@ export default function Home() {
           <div className="rounded-bl-2xl rounded-br-2xl flex items-center justify-between border-t border-[#7aecc4] bg-[#000000] px-5 py-4 text-xs text-[#FAF9F6] sm:px-7">
             <p>
               Step{" "}
-              <span className="font-semibold text-[#FAF9F6]">{step + 1}</span>{" "}
-              of <span className="font-semibold text-[#FAF9F6]">5</span>
+              <span className="font-semibold text-[#FAF9F6]">{step}</span>{" "}
+              of <span className="font-semibold text-[#FAF9F6]">4</span>
             </p>
           </div>
         </div>

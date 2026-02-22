@@ -1,12 +1,18 @@
 from typing import Dict, Optional
 import os
-from fastapi import FastAPI, HTTPException # type: ignore
-from fastapi.middleware.cors import CORSMiddleware # type: ignore
-from pydantic import BaseModel, Field # type: ignore
+from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+
+load_dotenv()
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
 
 from llm import generate_concepts_from_prompt, generate_roadmap_from_profile
 
+from auth import router as auth_router
+
 app = FastAPI()
+app.include_router(auth_router)
 
 default_origins = [
     "http://localhost:5173",
@@ -119,3 +125,17 @@ def roadmap(req: RoadmapRequest):
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+def main():
+    import uvicorn
+    uvicorn.run(
+        "server:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=True,
+    )
+
+
+if __name__ == "__main__":
+    main()
