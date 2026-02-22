@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import LevelSlider from "../components/LevelSlider";
 
+const API_BASE = import.meta.env.VITE_API_BASE;
+
 type Step = 0 | 1 | 2 | 3 | 4;
 
 const PROFILE_KEY = "madhacks_profile_v1";
@@ -186,7 +188,7 @@ export default function Home() {
     setConceptsError(null);
 
     try {
-      const r = await fetch("/api/concepts", {
+      const r = await fetch(`${API_BASE}/api/concepts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -334,7 +336,7 @@ export default function Home() {
     saveProfile(payload);
 
     try {
-      const r = await fetch("/api/roadmap", {
+      const r = await fetch(`${API_BASE}/api/roadmap`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
