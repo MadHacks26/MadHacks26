@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import LevelSlider from "../components/LevelSlider";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
+const API_BASE = import.meta.env.VITE_API_BASE ?? "";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 
