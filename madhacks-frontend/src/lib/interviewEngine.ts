@@ -1,9 +1,9 @@
 // ─── interviewEngine.ts ───────────────────────────────────────────────────
 // Handles: Gemini question gen → ElevenLabs TTS → Browser STT transcription
 
-const GEMINI_KEY          = import.meta.env.VITE_GEMINI_KEY          as string || "AIzaSyCfpLuXrOnTJiZLpWn_V4VyP5y0_8HFamk";
-const ELEVENLABS_KEY      = import.meta.env.VITE_ELEVENLABS_KEY      as string || "sk_8cc1db1d3cbac5dd656cf6075d3ede854cb4232085513176";
-const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID as string || "EXAVITQu4vr4xnSDxMaL"; // "Sarah" default
+const GEMINI_KEY          = import.meta.env.VITE_GEMINI_KEY          as string;
+const ELEVENLABS_KEY      = import.meta.env.VITE_ELEVENLABS_KEY      as string;
+const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID as string ; // "Sarah" default
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

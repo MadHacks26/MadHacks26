@@ -390,20 +390,26 @@ export default function MockInterview() {
   }
 
   // ── Boot: ONE Gemini call to load all questions, then start ───────────────
-  React.useEffect(() => {
-    setPhase("generating");
-    generateAllQuestions(TOTAL_QUESTIONS)
-      .then((qs) => {
-        setQuestions(qs);
-        questionsRef.current = qs;
-        askQuestion(0, qs);
-      })
-      .catch((e: any) => {
-        setError(e?.message ?? "Failed to load questions");
-        setPhase("processing");
-      });
-    return () => { sttRef.current?.stop(); };
-  }, []);
+  // ── WITH this block ───────────────────────────────────────────────────────
+const hasBooted = React.useRef(false); // add this line above the useEffect
+
+React.useEffect(() => {
+  if (hasBooted.current) return;  // ← blocks StrictMode's second call
+  hasBooted.current = true;
+
+  setPhase("generating");
+  generateAllQuestions(TOTAL_QUESTIONS)
+    .then((qs) => {
+      setQuestions(qs);
+      questionsRef.current = qs;
+      askQuestion(0, qs);
+    })
+    .catch((e: any) => {
+      setError(e?.message ?? "Failed to load questions");
+      setPhase("processing");
+    });
+  return () => { sttRef.current?.stop(); };
+}, []);
 
   // ── Derived ───────────────────────────────────────────────────────────────
   const questionNumber  = qIndex + 1;
@@ -412,7 +418,7 @@ export default function MockInterview() {
   const userSpeaking    = phase === "listening";
 
   function phaseLabel() {
-    if (phase === "generating")  return { cls:"loading",   icon:"⟳", text:"Loading all questions… (1 API call)" };
+    if (phase === "generating")  return { cls:"loading",   icon:"⟳", text:"Loading all questions…" };
     if (phase === "speaking")    return { cls:"speaking",  icon:"🔊", text:"AI is speaking…" };
     if (phase === "listening")   return { cls:"listening", icon:"🎙️", text:"Recording your answer — click Done when finished" };
     if (phase === "processing")  return { cls:"loading",   icon:"⟳", text:"Processing…" };
