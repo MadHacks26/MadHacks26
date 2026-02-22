@@ -104,7 +104,6 @@ function appendRoadmapToList(params: { uid: string; company: string; role: strin
   } catch {}
 }
 
-// ─── Component ────────────────────────────────────────────────────────────
 
 export default function Create() {
   const navigate = useNavigate();
@@ -124,7 +123,6 @@ export default function Create() {
   const [conceptsLoading, setConceptsLoading] = React.useState(false);
   const [conceptsError,   setConceptsError]   = React.useState<string | null>(null);
 
-  // "hidden" = no overlay | "visible" = faded in + spinner | "fading-out" = opacity going to 0
   const [overlayVisible, setOverlayVisible] = React.useState(false);
   const [overlayLabel,   setOverlayLabel]   = React.useState("Tailoring your concepts…");
 
@@ -160,7 +158,6 @@ export default function Create() {
     (step === 2 && parsePositiveInt(prepDays) !== null && parseHours(hoursPerDay) !== null) ||
     step === 3 || step === 4;
 
-  // ── Fire concepts fetch in background ─────────────────────────────────
   function startConceptsFetch(): Promise<boolean> {
     if (conceptsPromiseRef.current) return conceptsPromiseRef.current;
 
@@ -211,37 +208,32 @@ export default function Create() {
     return promise;
   }
 
-  // ── Navigation ────────────────────────────────────────────────────────
   async function next() {
     if (!canGoNext) return;
 
     if (step === 1) {
-      startConceptsFetch(); // fire and forget — runs in background
+      startConceptsFetch();
       setStep(2);
       return;
     }
 
     if (step === 2) {
-      // Already ready — skip overlay entirely
       if (conceptsReady) {
         setStep(3);
         return;
       }
 
-      // Still loading — show overlay, wait, then fade out and advance
-      setOverlayLabel("Tailoring your concepts…");
+      setOverlayLabel("Tailoring your concepts");
       setOverlayVisible(true);
       const ok = await (conceptsPromiseRef.current ?? Promise.resolve(false));
 
       if (!ok) {
-        // Error — hide overlay and stay on step 2
+
         setOverlayVisible(false);
         return;
       }
 
-      // Fade out the overlay (CSS transition handles the animation)
       setOverlayVisible(false);
-      // Small delay to let the fade-out complete before switching step
       await new Promise((res) => setTimeout(res, 400));
       setStep(3);
       return;
@@ -283,11 +275,10 @@ export default function Create() {
     return () => { if (hoursTooltipTimer.current) window.clearTimeout(hoursTooltipTimer.current); };
   }, []);
 
-  // ── Generate roadmap ──────────────────────────────────────────────────
   async function finish() {
     setRoadmapLoading(true);
     setRoadmapError(null);
-    setOverlayLabel("Building your roadmap…");
+    setOverlayLabel("Building your roadmap");
     setOverlayVisible(true);
 
     const prepDaysNum = parsePositiveInt(prepDays);
@@ -351,10 +342,6 @@ export default function Create() {
   return (
     <div className="relative min-h-screen bg-black text-white">
 
-      {/* ── Concepts loading overlay ───────────────────────────────────────
-           Sits on top of everything. Fades in when step 2 Next is clicked
-           while concepts are still generating. Fades out once they're done.
-      ── */}
       <div
         className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-5 bg-black pointer-events-none"
         style={{
@@ -363,16 +350,14 @@ export default function Create() {
           pointerEvents: overlayVisible ? "all" : "none",
         }}
       >
-        {/* Spinner */}
         <div
           className="w-12 h-12 rounded-full border-2 border-[#7aecc4]/15 border-t-[#7aecc4]"
           style={{ animation: "spin 0.9s linear infinite" }}
         />
-        <p className="text-xs font-semibold text-neutral-500 uppercase tracking-widest">
+        <p className="text-xs font-semibold text-neutral-300 uppercase tracking-widest">
           {overlayLabel}
         </p>
 
-        {/* Error state inside overlay */}
         {conceptsError && (
           <div className="mt-2 flex flex-col items-center gap-3">
             <p className="text-sm text-red-400">{conceptsError}</p>
@@ -393,11 +378,9 @@ export default function Create() {
 
       <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14">
 
-        {/* ── Top bar ── */}
         <div className="flex items-center justify-between gap-4 mb-8">
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">JARSON.AI</p>
 
-          {/* Step pills */}
           <div className="hidden sm:flex items-center gap-2">
             {stepLabels.map((label, i) => {
               const n = i + 1; const active = step === n; const done = step > n;
@@ -407,8 +390,8 @@ export default function Create() {
                   : done  ? "border-[#7aecc4]/20 bg-transparent text-[#7aecc4]/40"
                   :         "border-[#202026] bg-transparent text-neutral-600"
                 }`}>
-                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0 ${
-                    done ? "bg-[#7aecc4]/30 text-[#7aecc4]" : active ? "bg-[#7aecc4] text-black" : "bg-[#202026] text-neutral-500"
+                  <span className={`w-4 h-4 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                    done ? "bg-[#7aecc4]/30 text-[#7aecc4]" : active ? "bg-[#7aecc4] text-black" : "bg-[#202026] text-neutral-300"
                   }`}>
                     {done ? "✓" : n}
                   </span>
@@ -418,7 +401,6 @@ export default function Create() {
             })}
           </div>
 
-          {/* Mobile progress bars */}
           <div className="sm:hidden flex items-center gap-2">
             {[1,2,3,4].map((n) => (
               <div key={n} className={`h-2 w-8 rounded-full transition-all ${
@@ -428,31 +410,29 @@ export default function Create() {
           </div>
         </div>
 
-        {/* ── Card ── */}
         <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] overflow-hidden">
           <div className="p-6 sm:p-8">
             <AnimatePresence mode="wait">
 
-              {/* ── Step 1 ── */}
               {step === 1 && (
                 <motion.div key="step1" variants={stepVariants} initial="initial" animate="animate" exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  <h2 className="text-xl font-bold text-white">Hey{safeName ? `, ${safeName}` : ""}!</h2>
+                  <h2 className="text-xl font-bold text-[#7aecc4]">Hey{safeName ? `, ${safeName}` : ""}!</h2>
                   <p className="mt-1 text-sm text-neutral-400">What role are you aiming for, and where?</p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Job Role</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">Job Role</label>
                       <input className={inputBase} placeholder="e.g. SDE Intern" value={role}
                         onChange={(e) => setRole(e.target.value)} onKeyDown={onEnterNext} autoFocus />
                     </div>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Company</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">Company</label>
                       <input className={inputBase} placeholder="e.g. American Family Insurance" value={company}
                         onChange={(e) => setCompany(e.target.value)} onKeyDown={onEnterNext} />
                     </div>
                     <div className="flex flex-col gap-2 sm:col-span-2">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Job Posting Link</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">Job Posting Link</label>
                       <input type="url" className={inputBase} placeholder="https://..." value={jobLink}
                         onChange={(e) => setJobLink(e.target.value)} onKeyDown={onEnterNext} />
                     </div>
@@ -461,17 +441,16 @@ export default function Create() {
                   <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={() => navigate("/")}>Back</button>
                     <button className={buttonPrimary} onClick={() => void next()} disabled={!canGoNext}>
-                      Next →
+                      Next
                     </button>
                   </div>
                 </motion.div>
               )}
 
-              {/* ── Step 2 ── */}
               {step === 2 && (
                 <motion.div key="step2" variants={stepVariants} initial="initial" animate="animate" exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  <h2 className="text-xl font-bold text-white">Let's set your pace</h2>
+                  <h2 className="text-xl font-bold text-[#7aecc4]">Let's set your pace.</h2>
                   <p className="mt-1 text-sm text-neutral-400">We'll generate a plan that fits your schedule.</p>
 
                   {conceptsError && !overlayVisible && (
@@ -486,7 +465,7 @@ export default function Create() {
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     <div className="rounded-xl border-2 border-[#202026] bg-black p-4 flex flex-col gap-3">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Prep Days</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">Prep Days</label>
                       <input
                         inputMode="numeric" pattern="[0-9]*"
                         placeholder="How many days to prep?"
@@ -497,7 +476,7 @@ export default function Create() {
                     </div>
 
                     <div className="rounded-xl border-2 border-[#202026] bg-black p-4 flex flex-col gap-3">
-                      <label className="text-[10px] font-semibold tracking-widest text-neutral-500 uppercase">Daily Hours</label>
+                      <label className="text-xs font-semibold tracking-widest text-neutral-300 uppercase">Daily Hours</label>
                       <div className="relative">
                         <input
                           inputMode="decimal" placeholder="Hours per day?"
@@ -536,18 +515,17 @@ export default function Create() {
                   <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={back}>Back</button>
                     <button className={buttonPrimary} onClick={() => void next()} disabled={!canGoNext}>
-                      Next →
+                      Next
                     </button>
                   </div>
                 </motion.div>
               )}
 
-              {/* ── Step 3 ── */}
               {step === 3 && (
                 <motion.div key="step3" variants={stepVariants} initial="initial" animate="animate" exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  <h2 className="text-xl font-bold text-white">DSA Proficiency</h2>
-                  <p className="mt-1 text-sm text-neutral-400">Slide honestly — this only helps your plan adapt.</p>
+                  <h2 className="text-xl font-bold text-[#7aecc4]">DSA Proficiency</h2>
+                  <p className="mt-1 text-sm text-neutral-400">Slide honestly. This helps your plan adapt.</p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     {Object.entries(dsaConcepts).map(([topic]) => (
@@ -558,16 +536,15 @@ export default function Create() {
 
                   <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={back}>Back</button>
-                    <button className={buttonPrimary} onClick={() => void next()}>Next →</button>
+                    <button className={buttonPrimary} onClick={() => void next()}>Next</button>
                   </div>
                 </motion.div>
               )}
 
-              {/* ── Step 4 ── */}
               {step === 4 && (
                 <motion.div key="step4" variants={stepVariants} initial="initial" animate="animate" exit="exit"
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                  <h2 className="text-xl font-bold text-white">Core Fundamentals</h2>
+                  <h2 className="text-xl font-bold text-[#7aecc4]">Core Fundamentals</h2>
                   <p className="mt-1 text-sm text-neutral-400">This helps us tune prep beyond just LeetCode.</p>
 
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -587,7 +564,7 @@ export default function Create() {
                       <button className={buttonGhost} onClick={() => setStep(1)} disabled={roadmapLoading}>Reset</button>
                     </div>
                     <button className={buttonPrimary} onClick={finish} disabled={roadmapLoading}>
-                      {roadmapLoading ? "Generating…" : "Generate →"}
+                      {roadmapLoading ? "Generating…" : "Generate"}
                     </button>
                   </div>
                 </motion.div>
