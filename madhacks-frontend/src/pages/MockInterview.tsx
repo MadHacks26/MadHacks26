@@ -143,7 +143,6 @@ export default function MockInterview() {
   const [typingQ, setTypingQ] = React.useState(false);
   const [liveTranscript, setLive] = React.useState("");
   const [finalAnswer, setFinal] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
   const [muted, setMuted] = React.useState(false);
 
   const sttRef = React.useRef<{ start: () => void; stop: () => void } | null>(
@@ -180,7 +179,6 @@ export default function MockInterview() {
     setDisplayedQ("");
     setLive("");
     setFinal("");
-    setError(null);
     answerRef.current = "";
 
     try {
@@ -202,7 +200,6 @@ export default function MockInterview() {
       );
       sttRef.current.start();
     } catch (e: any) {
-      setError(e?.message ?? "Something went wrong");
       setPhase("processing");
     }
   }
@@ -249,15 +246,10 @@ export default function MockInterview() {
     hasBooted.current = true;
 
     setPhase("generating");
-    generateAllQuestions(TOTAL_QUESTIONS)
-      .then((qs) => {
-        questionsRef.current = qs;
-        askQuestion(0, qs);
-      })
-      .catch((e: any) => {
-        setError(e?.message ?? "Failed to load questions");
-        setPhase("processing");
-      });
+    generateAllQuestions(TOTAL_QUESTIONS).then((qs) => {
+      questionsRef.current = qs;
+      askQuestion(0, qs);
+    });
 
     return () => {
       cancelSpeech();
