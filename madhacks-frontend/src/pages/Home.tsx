@@ -2,31 +2,24 @@ import * as React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+
 const ROADMAP_KEY = "madhacks_roadmap_data_v1";
 
-function roadmapListKey(uid: string) {
-  return `madhacks_roadmaps_list_v1:${uid}`;
-}
+type RoadmapResponse = Record<
+  string,
+  {
+    roadmaps?: Record<string, any>;
+  }
+>;
 
-type RoadmapListItem = {
+type RoadmapCard = {
   id: string;
   company: string;
   role: string;
-  createdAt: number;
+  createdAt?: number | null;
   roadmapJson: any;
 };
-
-function readRoadmapList(uid: string): RoadmapListItem[] {
-  try {
-    const raw = localStorage.getItem(roadmapListKey(uid));
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(Boolean);
-  } catch {
-    return [];
-  }
-}
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString("en-US", {
@@ -36,21 +29,89 @@ function formatDate(ts: number) {
   });
 }
 
+function extractCreatedAt(roadmapObj: any): number | null {
+  const candidates = [
+    roadmapObj?.createdAt,
+    roadmapObj?.created_at,
+    roadmapObj?.meta?.createdAt,
+    roadmapObj?.meta?.created_at,
+  ];
+  for (const c of candidates) {
+    const n = Number(c);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return null;
+}
+
+function coerceCards(userId: string, payload: any): RoadmapCard[] {
+  const root = (payload as RoadmapResponse)?.[userId];
+  const roadmaps = root?.roadmaps;
+
+  if (!roadmaps || typeof roadmaps !== "object") return [];
+
+  const cards: RoadmapCard[] = Object.entries(roadmaps)
+    .filter(([company, obj]) => !!company && obj && typeof obj === "object")
+    .map(([company, obj]) => {
+      const role = String(obj?.role || "").trim();
+      return {
+        id: company, 
+        company: String(obj?.company || company).trim() || company,
+        role: role || "Unknown Role",
+        createdAt: extractCreatedAt(obj),
+        roadmapJson: obj,
+      };
+    });
+
+  cards.sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+
+  return cards;
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const { user, loading, logout } = useAuth();
-  const [roadmaps, setRoadmaps] = React.useState<RoadmapListItem[]>([]);
+
+  const [roadmaps, setRoadmaps] = React.useState<RoadmapCard[]>([]);
+  const [fetching, setFetching] = React.useState(false);
+  const [fetchError, setFetchError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     if (!loading && !user) navigate("/auth", { replace: true });
   }, [loading, user, navigate]);
 
+  async function fetchRoadmapsFromDb(uid: string) {
+    setFetching(true);
+    setFetchError(null);
+
+    try {
+      const url = `${API_BASE}/api/roadmap?user_id=${encodeURIComponent(uid)}`;
+      const r = await fetch(url, { method: "GET" });
+
+      if (!r.ok) {
+        const text = await r.text();
+        console.error("[Home] /api/roadmap error:", text);
+        throw new Error(text || `Request failed (${r.status})`);
+      }
+
+      const data = await r.json();
+      console.log("[Home] /api/roadmap response:", data);
+
+      const cards = coerceCards(uid, data);
+      setRoadmaps(cards);
+    } catch (e: any) {
+      setFetchError(e?.message ?? "Failed to load roadmaps");
+      setRoadmaps([]);
+    } finally {
+      setFetching(false);
+    }
+  }
+
   React.useEffect(() => {
     if (!user?.uid) return;
-    setRoadmaps(readRoadmapList(user.uid));
+    void fetchRoadmapsFromDb(user.uid);
   }, [user?.uid]);
 
-  const handleView = (rm: RoadmapListItem) => {
+  const handleView = (rm: RoadmapCard) => {
     localStorage.setItem(ROADMAP_KEY, JSON.stringify(rm.roadmapJson));
     navigate("/roadmap");
   };
@@ -85,14 +146,16 @@ export default function Home() {
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
             JASPER.AI
           </p>
+
           <div className="flex items-center gap-3">
             <span className="text-xs text-neutral-400 hidden sm:block">
               {user.email || user.displayName || "User"}
             </span>
+
             <button
               onClick={handleSignOut}
               title="Sign out"
-              className="inline-flex items-center justify-center  text-red-600 text-sm font-semibold transition  hover:text-white active:scale-[0.99]"
+              className="inline-flex items-center justify-center text-red-600 text-sm font-semibold transition hover:text-white active:scale-[0.99]"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -117,7 +180,23 @@ export default function Home() {
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl text-white">
               {displayName ? `Welcome back, ${displayName}!` : "Welcome back."}
             </h1>
+
+            <div className="mt-2 flex items-center gap-3">
+              {/* <button
+                onClick={() => user?.uid && fetchRoadmapsFromDb(user.uid)}
+                className="text-xs font-semibold text-neutral-300 hover:text-white transition"
+                disabled={fetching}
+                title="Refresh from database"
+              >
+                {fetching ? "Refreshing..." : "Refresh"}
+              </button> */}
+
+              {fetchError && (
+                <span className="text-xs text-red-400">{fetchError}</span>
+              )}
+            </div>
           </div>
+
           <button
             onClick={() => navigate("/create")}
             className="inline-flex items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-5 py-3 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99] flex-shrink-0"
@@ -125,6 +204,21 @@ export default function Home() {
             Create Roadmap
           </button>
         </div>
+
+        {fetching && roadmaps.length === 0 && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="rounded-2xl border-2 border-[#202026] bg-[#090b10] p-5 animate-pulse"
+              >
+                <div className="h-4 w-2/3 bg-white/10 rounded" />
+                <div className="mt-2 h-4 w-1/2 bg-white/10 rounded" />
+                <div className="mt-6 h-10 w-full bg-white/10 rounded-xl" />
+              </div>
+            ))}
+          </div>
+        )}
 
         {roadmaps.length > 0 && (
           <div className="flex flex-col gap-3">
@@ -135,22 +229,25 @@ export default function Home() {
                   className="rounded-2xl border-2 border-[#202026] bg-[#090b10] p-5 flex flex-col gap-4 transition-all hover:border-[#7aecc4]/20"
                 >
                   <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="text-md font-bold text-white">
                         {rm.company || "Unknown Company"}
                       </h3>
-                      <span className="text-white">—</span>
+                      <span className="text-white/70">•</span>
                       <h3 className="text-md font-bold text-white">
                         {rm.role || "Unknown Role"}
                       </h3>
                     </div>
 
-                    {rm.createdAt && (
+                    {rm.createdAt ? (
                       <p className="text-sm text-neutral-500">
                         {formatDate(rm.createdAt)}
                       </p>
+                    ) : (
+                      <p className="text-sm text-neutral-600"> </p>
                     )}
                   </div>
+
                   <button
                     onClick={() => handleView(rm)}
                     className="inline-flex items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-4 py-2.5 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99] w-full"
@@ -163,10 +260,13 @@ export default function Home() {
           </div>
         )}
 
-        {roadmaps.length === 0 && (
+        {!fetching && roadmaps.length === 0 && (
           <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] p-10 flex flex-col items-center justify-center gap-3 text-center min-h-[200px]">
             <p className="text-sm font-semibold text-neutral-400">
               No roadmaps yet
+            </p>
+            <p className="text-xs text-neutral-500">
+              Create one and it’ll show up here from the database.
             </p>
           </div>
         )}
