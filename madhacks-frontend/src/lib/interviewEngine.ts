@@ -1,11 +1,10 @@
 // ─── interviewEngine.ts ───────────────────────────────────────────────────
 // Handles: Gemini question gen → ElevenLabs TTS → Browser STT transcription
 import { loadRoadmapMeta } from "./roadmapStore";
-
-
+ 
 const GEMINI_KEY          = import.meta.env.VITE_GEMINI_KEY          as string;
 const ELEVENLABS_KEY      = import.meta.env.VITE_ELEVENLABS_KEY      as string;
-const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID as string ; // "Sarah" default
+const ELEVENLABS_VOICE_ID = import.meta.env.VITE_ELEVENLABS_VOICE_ID as string;
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -143,7 +142,22 @@ Respond ONLY with valid JSON (no markdown, no backticks):
 
 // ─── ElevenLabs: TTS → play audio ─────────────────────────────────────────
 
+// Module-level reference so cancelSpeech() can always reach the active audio
+let _currentAudio: HTMLAudioElement | null = null;
+
+/** Immediately stops any in-progress ElevenLabs audio. */
+export function cancelSpeech(): void {
+  if (_currentAudio) {
+    _currentAudio.pause();
+    _currentAudio.src = ""; // releases the blob URL binding
+    _currentAudio = null;
+  }
+}
+
 export async function speakText(text: string): Promise<void> {
+  // Cancel anything already playing before starting a new utterance
+  cancelSpeech();
+
   const res = await fetch(
     `https://api.elevenlabs.io/v1/text-to-speech/${ELEVENLABS_VOICE_ID}`,
     {
@@ -161,14 +175,29 @@ export async function speakText(text: string): Promise<void> {
   );
 
   if (!res.ok) throw new Error(`ElevenLabs error: ${res.status}`);
+
   const blob = await res.blob();
   const url  = URL.createObjectURL(blob);
 
   return new Promise((resolve, reject) => {
     const audio = new Audio(url);
-    audio.onended = () => { URL.revokeObjectURL(url); resolve(); };
-    audio.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
-    audio.play().catch(reject);
+    _currentAudio = audio; // ← store reference at module level
+
+    audio.onended = () => {
+      _currentAudio = null;
+      URL.revokeObjectURL(url);
+      resolve();
+    };
+    audio.onerror = (e) => {
+      _currentAudio = null;
+      URL.revokeObjectURL(url);
+      reject(e);
+    };
+    audio.play().catch((e) => {
+      _currentAudio = null;
+      URL.revokeObjectURL(url);
+      reject(e);
+    });
   });
 }
 

@@ -5,6 +5,7 @@ import {
   generateAllQuestions,
   type QuestionItem,
   speakText,
+  cancelSpeech,
   createSTT,
   type QAPair,
 } from "../lib/interviewEngine";
@@ -141,7 +142,7 @@ export default function MockInterview() {
 
   // ── Exit: immediately kill audio + STT, then navigate ────────────────
   function exitSession() {
-    stopAllAudio();
+    cancelSpeech();
     sttRef.current?.stop();
     navigate("/roadmap");
   }
@@ -158,7 +159,7 @@ export default function MockInterview() {
 
     // Cleanup on unmount — also stops audio if component is torn down
     return () => {
-      stopAllAudio();
+      cancelSpeech();
       sttRef.current?.stop();
     };
   }, []);
