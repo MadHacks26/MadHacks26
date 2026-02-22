@@ -53,16 +53,6 @@ const styles = `
 type Phase = "generating" | "speaking" | "listening" | "processing" | "done";
 const TOTAL_QUESTIONS = 5;
 
-// ── Stop all audio: cancels Web Speech TTS + pauses any <audio> elements ──
-function stopAllAudio() {
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-  }
-  document.querySelectorAll<HTMLAudioElement>("audio").forEach((el) => {
-    el.pause();
-    el.currentTime = 0;
-  });
-}
 
 export default function MockInterview() {
   const navigate = useNavigate();
@@ -82,7 +72,6 @@ export default function MockInterview() {
   const answerRef    = React.useRef("");
   const questionsRef = React.useRef<QuestionItem[]>([]);
 
-  // ── Typewriter ────────────────────────────────────────────────────────
   React.useEffect(() => {
     if (!currentQ) return;
     setDisplayedQ(""); setTypingQ(true);
@@ -140,7 +129,6 @@ export default function MockInterview() {
     }
   }
 
-  // ── Exit: immediately kill audio + STT, then navigate ────────────────
   function exitSession() {
     cancelSpeech();
     sttRef.current?.stop();
@@ -157,7 +145,6 @@ export default function MockInterview() {
       .then((qs) => { questionsRef.current = qs; askQuestion(0, qs); })
       .catch((e: any) => { setError(e?.message ?? "Failed to load questions"); setPhase("processing"); });
 
-    // Cleanup on unmount — also stops audio if component is torn down
     return () => {
       cancelSpeech();
       sttRef.current?.stop();
@@ -183,7 +170,6 @@ export default function MockInterview() {
       <style>{styles}</style>
       <div className="min-h-screen bg-black text-white flex flex-col">
 
-        {/* ── Header ── */}
         <header className="flex items-center justify-between gap-4 px-6 py-4 border-b-2 border-[#202026] bg-black">
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">MOCK INTERVIEW</p>
 
@@ -212,13 +198,10 @@ export default function MockInterview() {
           </button>
         </header>
 
-        {/* ── Body ── */}
         <main className="flex-1 flex flex-col gap-5 px-6 py-6 max-w-5xl w-full mx-auto">
 
-          {/* ── Video cards ── */}
           <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
 
-            {/* AI card */}
             <div className={`v-card relative rounded-2xl overflow-hidden border-2 border-[#202026] bg-[#090b10] aspect-[16/10] flex items-center justify-center transition-all duration-300 ${aiSpeaking ? "speaking glow-ai border-[#7aecc4]/30" : ""}`}>
               <div className="flex flex-col items-center gap-3">
                 <div className="relative w-16 h-16 rounded-full flex items-center justify-center text-3xl bg-[#0d1f1a] border-2 border-[#7aecc4]/20">
@@ -237,9 +220,7 @@ export default function MockInterview() {
               </div>
             </div>
 
-            {/* User card — static, no camera */}
             <div className={`v-card user-card user-card-bg relative rounded-2xl overflow-hidden border-2 border-[#202026] aspect-[16/10] flex items-center justify-center transition-all duration-300 ${userSpeaking ? "speaking glow-user border-red-600/30" : ""}`}>
-              {/* Subtle dot-grid texture overlay */}
               <div
                 className="absolute inset-0 pointer-events-none"
                 style={{
@@ -267,7 +248,6 @@ export default function MockInterview() {
             </div>
           </div>
 
-          {/* ── Status banner ── */}
           <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 text-sm font-semibold ${banner.cls}`}>
             {banner.spin
               ? <span className="animate-spin-slow inline-block">⟳</span>
@@ -276,7 +256,6 @@ export default function MockInterview() {
             <span>{error || banner.text}</span>
           </div>
 
-          {/* ── Transcript box ── */}
           <div className="rounded-2xl border-2 border-[#202026] bg-[#090b10] px-5 py-4 min-h-[110px] flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <p className="text-xs font-semibold text-neutral-500 uppercase tracking-wide">Live transcript</p>
@@ -306,7 +285,6 @@ export default function MockInterview() {
             )}
           </div>
 
-          {/* ── Controls ── */}
           <div className="flex items-center justify-center gap-3 pb-2">
             <button
               onClick={() => setMuted(v => !v)}

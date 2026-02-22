@@ -139,7 +139,6 @@ export default function MockPrepScreen() {
     <div className="min-h-screen bg-black text-white">
       <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
 
-        {/* ── Page heading ── */}
         <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">MOCK INTERVIEW</p>
         <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-white">
           Before we begin.
@@ -148,16 +147,13 @@ export default function MockPrepScreen() {
           Verify your setup, then proceed to the interview.
         </p>
 
-        {/* ── Two-column grid ── */}
         <div className="mt-8 grid gap-5 sm:grid-cols-2">
 
-          {/* LEFT — Mic test */}
           <div className="rounded-2xl border-2 border-[#202026] bg-black p-5">
             <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
               Microphone Test
             </p>
 
-            {/* Visualiser */}
             <div className="h-10 flex items-end justify-center gap-1 rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-2 mb-4">
               {micEnabled
                 ? micVolume.map((h, i) => (
@@ -171,7 +167,6 @@ export default function MockPrepScreen() {
               }
             </div>
 
-            {/* Mic device selector */}
             <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wide mb-1.5">Device</p>
             <select
               className="w-full bg-[#090b10] border-2 border-[#202026] rounded-xl px-3 py-2.5 text-white text-sm outline-none cursor-pointer transition-all appearance-none hover:border-[#7aecc4]/30 focus:border-[#7aecc4]/40"
@@ -193,7 +188,6 @@ export default function MockPrepScreen() {
             </select>
           </div>
 
-          {/* RIGHT — System checks */}
           <div className="rounded-2xl border-2 border-[#202026] bg-black p-5">
             <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
               System Checks
@@ -221,7 +215,6 @@ export default function MockPrepScreen() {
           </div>
         </div>
 
-        {/* ── Interview details ── */}
         <div className="mt-5 rounded-2xl border-2 border-[#202026] bg-black p-5">
           <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
             Interview Details
@@ -252,7 +245,6 @@ export default function MockPrepScreen() {
           </div>
         </div>
 
-        {/* ── Readiness banner ── */}
         <div className={[
           "mt-5 rounded-2xl px-4 py-3 flex items-center gap-3 text-sm font-medium border-2",
           isReady
@@ -267,7 +259,6 @@ export default function MockPrepScreen() {
           </span>
         </div>
 
-        {/* ── Footer ── */}
         <div className="mt-6 flex items-center justify-between">
           <p className="text-xs text-neutral-600 font-semibold">
             {passCount}/{checks.length} checks passed
