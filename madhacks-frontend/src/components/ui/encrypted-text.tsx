@@ -1,4 +1,3 @@
-"use client";
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
 import { cn } from "@/lib/utils";
@@ -22,6 +21,11 @@ type EncryptedTextProps = {
   encryptedClassName?: string;
   /** CSS class for styling the revealed characters */
   revealedClassName?: string;
+
+  /** If true, animation restarts after finishing. */
+  loop?: boolean;
+  /** Pause after fully revealed before restarting (ms). Defaults to 1200ms. */
+  loopDelayMs?: number;
 };
 
 const DEFAULT_CHARSET =
@@ -32,10 +36,7 @@ function generateRandomCharacter(charset: string): string {
   return charset.charAt(index);
 }
 
-function generateGibberishPreservingSpaces(
-  original: string,
-  charset: string,
-): string {
+function generateGibberishPreservingSpaces(original: string, charset: string): string {
   if (!original) return "";
   let result = "";
   for (let i = 0; i < original.length; i += 1) {
@@ -53,94 +54,107 @@ export const EncryptedText: React.FC<EncryptedTextProps> = ({
   flipDelayMs = 50,
   encryptedClassName,
   revealedClassName,
+  loop = false,
+  loopDelayMs = 1200,
 }) => {
   const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true });
+  const isInView = useInView(ref, { once: !loop }); // if looping, don't lock to once
 
   const [revealCount, setRevealCount] = useState<number>(0);
+
   const animationFrameRef = useRef<number | null>(null);
+  const restartTimeoutRef = useRef<number | null>(null);
+
   const startTimeRef = useRef<number>(0);
   const lastFlipTimeRef = useRef<number>(0);
+
   const scrambleCharsRef = useRef<string[]>(
     text ? generateGibberishPreservingSpaces(text, charset).split("") : [],
   );
 
   useEffect(() => {
     if (!isInView) return;
+    if (!text) return;
 
-    // Reset state for a fresh animation whenever dependencies change
-    const initial = text
-      ? generateGibberishPreservingSpaces(text, charset)
-      : "";
-    scrambleCharsRef.current = initial.split("");
-    startTimeRef.current = performance.now();
-    lastFlipTimeRef.current = startTimeRef.current;
-    setRevealCount(0);
-
+    const totalLength = text.length;
     let isCancelled = false;
 
-    const update = (now: number) => {
-      if (isCancelled) return;
+    const resetAndStart = () => {
+      const initial = generateGibberishPreservingSpaces(text, charset);
+      scrambleCharsRef.current = initial.split("");
+      startTimeRef.current = performance.now();
+      lastFlipTimeRef.current = startTimeRef.current;
+      setRevealCount(0);
 
-      const elapsedMs = now - startTimeRef.current;
-      const totalLength = text.length;
-      const currentRevealCount = Math.min(
-        totalLength,
-        Math.floor(elapsedMs / Math.max(1, revealDelayMs)),
-      );
+      const update = (now: number) => {
+        if (isCancelled) return;
 
-      setRevealCount(currentRevealCount);
+        const elapsedMs = now - startTimeRef.current;
+        const currentRevealCount = Math.min(
+          totalLength,
+          Math.floor(elapsedMs / Math.max(1, revealDelayMs)),
+        );
 
-      if (currentRevealCount >= totalLength) {
-        return;
-      }
+        setRevealCount(currentRevealCount);
 
-      // Re-randomize unrevealed scramble characters on an interval
-      const timeSinceLastFlip = now - lastFlipTimeRef.current;
-      if (timeSinceLastFlip >= Math.max(0, flipDelayMs)) {
-        for (let index = 0; index < totalLength; index += 1) {
-          if (index >= currentRevealCount) {
-            if (text[index] !== " ") {
+        // If done revealing...
+        if (currentRevealCount >= totalLength) {
+          if (loop) {
+            // restart after a pause
+            restartTimeoutRef.current = window.setTimeout(() => {
+              if (!isCancelled) resetAndStart();
+            }, Math.max(0, loopDelayMs));
+          }
+          return;
+        }
+
+        // Re-randomize unrevealed scramble characters on an interval
+        const timeSinceLastFlip = now - lastFlipTimeRef.current;
+        if (timeSinceLastFlip >= Math.max(0, flipDelayMs)) {
+          for (let index = 0; index < totalLength; index += 1) {
+            if (index >= currentRevealCount) {
               scrambleCharsRef.current[index] =
-                generateRandomCharacter(charset);
-            } else {
-              scrambleCharsRef.current[index] = " ";
+                text[index] === " " ? " " : generateRandomCharacter(charset);
             }
           }
+          lastFlipTimeRef.current = now;
         }
-        lastFlipTimeRef.current = now;
-      }
 
-      animationFrameRef.current = requestAnimationFrame(update);
-    };
+        animationFrameRef.current = requestAnimationFrame(update);
+      };
 
-    animationFrameRef.current = requestAnimationFrame(update);
-
-    return () => {
-      isCancelled = true;
+      // cancel any previous RAF before starting fresh
       if (animationFrameRef.current !== null) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      animationFrameRef.current = requestAnimationFrame(update);
     };
-  }, [isInView, text, revealDelayMs, charset, flipDelayMs]);
+
+    resetAndStart();
+
+    return () => {
+      isCancelled = true;
+
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (restartTimeoutRef.current !== null) {
+        window.clearTimeout(restartTimeoutRef.current);
+      }
+    };
+  }, [isInView, text, revealDelayMs, charset, flipDelayMs, loop, loopDelayMs]);
 
   if (!text) return null;
 
   return (
-    <motion.span
-      ref={ref}
-      className={cn(className)}
-      aria-label={text}
-      role="text"
-    >
+    <motion.span ref={ref} className={cn(className)} aria-label={text} role="text">
       {text.split("").map((char, index) => {
         const isRevealed = index < revealCount;
         const displayChar = isRevealed
           ? char
           : char === " "
             ? " "
-            : (scrambleCharsRef.current[index] ??
-              generateRandomCharacter(charset));
+            : (scrambleCharsRef.current[index] ?? generateRandomCharacter(charset));
 
         return (
           <span

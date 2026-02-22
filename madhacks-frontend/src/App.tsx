@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider, ProtectedRoute } from "./auth";
-import Home from "./pages/Home";
+import Create from "./pages/Create.tsx";
 import Summary from "./pages/Summary.tsx";
-import Dashboard from "./pages/Dashboard";
+import Roadmap from "./pages/Roadmap.tsx";
 import MockInterview from "./pages/MockInterview";
 import MockPrepScreen from "./pages/MockPrepScreen.tsx";
 import Auth from "./pages/Auth";
 import FeedbackScreen from "./pages/FeedbackScreen.tsx";
 
+import Home from "./pages/Home.tsx";
 
 export default function App() {
   return (
@@ -29,10 +30,18 @@ export default function App() {
             }
           />
           <Route
-            path="/dashboard"
+            path="/create"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Create />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/roadmap"
+            element={
+              <ProtectedRoute>
+                <Roadmap />
               </ProtectedRoute>
             }
           />

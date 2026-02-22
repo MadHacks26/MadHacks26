@@ -65,8 +65,7 @@ export default function Auth() {
         <div className="relative z-10 max-w-md rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
           <h1 className="text-xl font-bold text-white">Auth</h1>
           <p className="mt-2 text-sm text-neutral-300">
-            Firebase Auth is not configured. Add VITE_FIREBASE_* env variables
-            to enable login.
+            Firebase Auth is not configured. Add VITE_FIREBASE_* env variables to enable login.
           </p>
         </div>
       </div>
@@ -83,7 +82,9 @@ export default function Auth() {
             text="Jarson.ai"
             revealDelayMs={70}
             flipDelayMs={25}
-            encryptedClassName="text-white/40 font-mono"
+            loop
+            loopDelayMs={1400}
+            encryptedClassName="text-white/35"
             revealedClassName="text-white"
           />
         </h1>
