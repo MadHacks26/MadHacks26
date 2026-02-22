@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./auth";
+import { AuthProvider, ProtectedRoute } from "./auth";
 import Home from "./pages/Home";
 import Summary from "./pages/Summary.tsx";
 import Dashboard from "./pages/Dashboard";
@@ -12,12 +12,44 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Home />
+            </ProtectedRoute>} 
+          />
           <Route path="/auth" element={<Auth />} />
-          <Route path="/summary" element={<Summary />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/mock-interview" element={<MockPrepScreen />} />
-          <Route path="/mock-interview/session" element={<MockInterview />} />
+          <Route
+            path="/summary"
+            element={
+              <ProtectedRoute>
+                <Summary />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mock-interview"
+            element={
+              <ProtectedRoute>
+                <MockPrepScreen />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/mock-interview/session"
+            element={
+              <ProtectedRoute>
+                <MockInterview />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

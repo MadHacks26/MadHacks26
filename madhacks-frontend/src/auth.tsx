@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import {
   type User,
   GoogleAuthProvider,
@@ -90,4 +91,22 @@ export function useAuth(): AuthContextValue {
   const ctx = React.useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
+}
+
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-neutral-50">
+        <p className="text-sm text-neutral-600">Loading...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 }
