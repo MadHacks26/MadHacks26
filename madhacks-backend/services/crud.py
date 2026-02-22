@@ -35,6 +35,29 @@ def get_roadmaps_by_user_id(
     doc = doc_ref.get()
 
     roadmaps = (doc.to_dict() or {}).get("roadmaps", {}) if doc.exists else {}
+
+    # get the existing urls and parse the roadmap
+    existing_urls = get_urls_for_user(user_id)
+
+    # For each roadmap, iterate over each day's checklist and augment with 'checked' if URL exists in existing_urls
+    for company, roadmap_json in roadmaps.items():
+        roadmap_list = roadmap_json.get("roadmap", [])
+        if not isinstance(roadmap_list, list):
+            continue
+        for day_obj in roadmap_list:
+            if not isinstance(day_obj, dict):
+                continue
+            checklist = day_obj.get("checklist", [])
+            if not isinstance(checklist, list):
+                continue
+            for item in checklist:
+                if not isinstance(item, dict):
+                    continue
+                url = item.get("url")
+                if isinstance(url, str) and url in existing_urls:
+                    item["checked"] = existing_urls[url]
+
+
     return {user_id: {"roadmaps": roadmaps}}
 
 
