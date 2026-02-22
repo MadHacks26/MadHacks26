@@ -1,6 +1,15 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { loadChecks, saveChecks, makeTaskKey } from "../lib/roadmapStore";
+import { motion } from "framer-motion";
+import { makeTaskKey } from "../lib/roadmapStore";
+import { useAuth } from "../auth";
+
+const RAW_API_BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+const API_ORIGIN = RAW_API_BASE.replace(/\/+$/, "").replace(/\/api$/, "");
+const apiUrl = (path: string) => {
+  const p = path.startsWith("/") ? path : `/${path}`;
+  return `${API_ORIGIN}/api${p}`;
+};
 
 const ROADMAP_KEY = "madhacks_roadmap_data_v1";
 
@@ -11,6 +20,7 @@ type RoadmapChecklistItem = {
   topic?: string;
   reason?: string;
   difficulty?: string;
+  checked?: boolean;
 };
 
 type RoadmapDay = {
@@ -26,6 +36,26 @@ type SummaryShape = {
   total_study_resources: number;
   total_leetcode_problems: number;
 };
+
+type StoredRoadmapShape = {
+  company?: string;
+  role?: string;
+};
+
+type UserRoadmapsResponse = Record<
+  string,
+  {
+    roadmaps?: Record<
+      string,
+      {
+        company?: string;
+        role?: string;
+        summary?: SummaryShape;
+        roadmap?: RoadmapDay[];
+      }
+    >;
+  }
+>;
 
 function normalizeType(kind: string | undefined) {
   const k = String(kind || "")
@@ -67,28 +97,6 @@ function isValidDay(x: any): x is RoadmapDay {
   );
 }
 
-function normalizeRoadmapFromStorage(raw: string | null) {
-  if (!raw) return { obj: null, days: [], summary: null };
-  let parsed: any = null;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return { obj: raw, days: [], summary: null };
-  }
-
-  if (parsed && typeof parsed === "object" && Array.isArray(parsed.roadmap)) {
-    return {
-      obj: parsed,
-      days: parsed.roadmap.filter(isValidDay),
-      summary: parsed.summary ?? null,
-    };
-  }
-  if (Array.isArray(parsed))
-    return { obj: parsed, days: parsed.filter(isValidDay), summary: null };
-  if (isValidDay(parsed)) return { obj: parsed, days: [parsed], summary: null };
-  return { obj: parsed, days: [], summary: null };
-}
-
 function sortDays(days: RoadmapDay[]) {
   return [...days].sort((a, b) => a.day - b.day);
 }
@@ -108,27 +116,111 @@ function coerceSummary(x: any): SummaryShape | null {
   return x as SummaryShape;
 }
 
+function readSelectedCompanyFromStorage(): string | null {
+  try {
+    const raw = localStorage.getItem(ROADMAP_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as StoredRoadmapShape;
+    if (parsed && typeof parsed.company === "string" && parsed.company.trim()) {
+      return parsed.company.trim();
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function fetchUserRoadmaps(
+  userId: string
+): Promise<UserRoadmapsResponse> {
+  const url = `${apiUrl("/roadmap/")}?user_id=${encodeURIComponent(userId)}`;
+  const r = await fetch(url, { method: "GET" });
+  if (!r.ok) throw new Error(await r.text());
+  return (await r.json()) as UserRoadmapsResponse;
+}
+
+async function putItem(params: { url: string; checked: boolean }, token: any) {
+  
+  const r = await fetch(apiUrl("/roadmap/putitem"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+
+    body: JSON.stringify(params),
+  });
+  if (!r.ok) throw new Error(await r.text());
+  const data = await r.json().catch(() => null);
+  if (data && typeof data.ok === "boolean" && data.ok === false) {
+    throw new Error(data.message || "Item update failed");
+  }
+}
+
 export default function Roadmap() {
   const navigate = useNavigate();
+  const { user, loading, getIdToken } = useAuth();
+
   const [days, setDays] = React.useState<RoadmapDay[]>([]);
   const [checks, setChecks] = React.useState<Record<string, boolean>>({});
   const [summary, setSummary] = React.useState<SummaryShape | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [syncing, setSyncing] = React.useState(false);
+
+  const selectedCompany = React.useMemo(
+    () => readSelectedCompanyFromStorage(),
+    []
+  );
 
   React.useEffect(() => {
-    const raw = localStorage.getItem(ROADMAP_KEY);
-    const { days: extracted, summary: extractedSummary } =
-      normalizeRoadmapFromStorage(raw);
-    setSummary(coerceSummary(extractedSummary));
-    if (!extracted.length) {
-      setError("No roadmap found. Generate it first, then come back here.");
-      setDays([]);
-    } else {
-      setError(null);
-      setDays(sortDays(extracted));
+    if (loading) return;
+    if (!user?.uid) {
+      navigate("/auth", { replace: true });
+      return;
     }
-    setChecks(loadChecks());
-  }, []);
+
+    if (!selectedCompany) {
+      setError(
+        "No company selected. Go back and click View on a roadmap card."
+      );
+      return;
+    }
+
+    setSyncing(true);
+    setError(null);
+
+    void (async () => {
+      try {
+        const payload = await fetchUserRoadmaps(user.uid);
+
+        const userBlock = payload?.[user.uid];
+        const roadmaps = userBlock?.roadmaps || {};
+        const rm = roadmaps?.[selectedCompany];
+
+        if (!rm || !Array.isArray(rm.roadmap)) {
+          setDays([]);
+          setSummary(null);
+          setChecks({});
+          setError(`No roadmap found for ${selectedCompany}.`);
+          return;
+        }
+
+        const cleanDays = sortDays(rm.roadmap.filter(isValidDay));
+        setDays(cleanDays);
+        setSummary(coerceSummary(rm.summary));
+
+        const nextChecks: Record<string, boolean> = {};
+        for (const d of cleanDays) {
+          const list = d.checklist ?? [];
+          for (let i = 0; i < list.length; i++) {
+            nextChecks[makeTaskKey(d.day, i)] = list[i]?.checked === true;
+          }
+        }
+        setChecks(nextChecks);
+      } catch (e: any) {
+        setError(e?.message ?? "Failed to load roadmap.");
+      } finally {
+        setSyncing(false);
+      }
+    })();
+  }, [loading, user?.uid, navigate, selectedCompany]);
 
   const totalTasks = days.reduce(
     (acc, d) => acc + (d.checklist?.length ?? 0),
@@ -145,12 +237,47 @@ export default function Roadmap() {
     totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   function toggle(dayNum: number, idx: number) {
+    if (!user?.uid || !selectedCompany) return;
+
+    const day = days.find((d) => d.day === dayNum);
+    const item = day?.checklist?.[idx];
+    const url = item?.url;
+    if (!url) return;
+
     const key = makeTaskKey(dayNum, idx);
-    setChecks((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      saveChecks(next);
-      return next;
-    });
+    const prev = checks[key] === true;
+    const next = !prev;
+
+    setChecks((p) => ({ ...p, [key]: next }));
+
+    setDays((prevDays) =>
+      prevDays.map((d) => {
+        if (d.day !== dayNum) return d;
+        const list = (d.checklist ?? []).map((it, i) =>
+          i === idx ? { ...it, checked: next } : it
+        );
+        return { ...d, checklist: list };
+      })
+    );
+
+    void (async () => {
+      try {
+        const token = await getIdToken();
+
+        await putItem({ url, checked: next }, token);
+      } catch {
+        setChecks((p) => ({ ...p, [key]: prev }));
+        setDays((prevDays) =>
+          prevDays.map((d) => {
+            if (d.day !== dayNum) return d;
+            const list = (d.checklist ?? []).map((it, i) =>
+              i === idx ? { ...it, checked: prev } : it
+            );
+            return { ...d, checklist: list };
+          })
+        );
+      }
+    })();
   }
 
   return (
@@ -165,6 +292,9 @@ export default function Roadmap() {
               <h1 className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl text-white">
                 Check things off as you go.
               </h1>
+              {syncing ? (
+                <p className="mt-2 text-xs text-neutral-500">Syncing…</p>
+              ) : null}
             </div>
 
             {error ? (
@@ -217,15 +347,11 @@ export default function Roadmap() {
             <p className="text-sm font-semibold text-neutral-400">
               Nothing to show yet.
             </p>
-            <p className="text-sm text-neutral-600">
-              Go back to Summary and click View my roadmap after generating the
-              plan.
-            </p>
             <button
-              onClick={() => navigate("/summary")}
+              onClick={() => navigate("/")}
               className="inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-2.5 text-sm font-semibold transition hover:bg-neutral-800 active:scale-[0.99]"
             >
-              Back to Summary
+              Home
             </button>
           </div>
         )}
@@ -240,8 +366,10 @@ export default function Roadmap() {
               const dayTotal = day.checklist?.length ?? 0;
 
               return (
-                <div
+                <motion.div
                   key={day.day}
+                  whileHover={{ scale: 1.01 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 18 }}
                   className={`rounded-2xl border-2 bg-[#090b10] transition-all duration-300 ${
                     done ? "border-[#7aecc4]/40" : "border-[#202026]"
                   }`}
@@ -296,7 +424,14 @@ export default function Roadmap() {
                             }`}
                           >
                             <div className="flex items-start gap-3">
-                              <button
+                              <motion.button
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.9 }}
+                                transition={{
+                                  type: "spring",
+                                  stiffness: 500,
+                                  damping: 20,
+                                }}
                                 onClick={() => toggle(day.day, idx)}
                                 className={[
                                   "mt-0.5 h-5 w-5 flex-none rounded-md border-2 transition-all duration-200 flex items-center justify-center",
@@ -324,7 +459,7 @@ export default function Roadmap() {
                                     />
                                   </svg>
                                 )}
-                              </button>
+                              </motion.button>
 
                               <div className="min-w-0 flex-1">
                                 <div className="flex flex-wrap items-center gap-1.5 mb-2">
@@ -392,21 +527,19 @@ export default function Roadmap() {
                       })}
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         )}
 
         <div className="flex items-center justify-between pt-2">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate("/")}
-              className="inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-3 text-sm font-semibold transition hover:bg-neutral-800 active:scale-[0.99]"
-            >
-              Home
-            </button>
-          </div>
+          <button
+            onClick={() => navigate("/")}
+            className="inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-5 py-3 text-sm font-semibold transition hover:bg-neutral-800 active:scale-[0.99]"
+          >
+            Home
+          </button>
           <button
             onClick={() => navigate("/mock-interview")}
             className="inline-flex items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-6 py-3 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99]"
