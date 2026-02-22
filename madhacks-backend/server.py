@@ -34,6 +34,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "https://madhacks26.vercel.app",
+        "https://madhacks.xyz",
+        "https://www.madhacks.xyz",
     ],
     allow_credentials=True,
     allow_methods=["*"],
