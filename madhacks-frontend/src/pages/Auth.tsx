@@ -79,7 +79,7 @@ export default function Auth() {
       <div className="relative z-10 w-full max-w-md">
         <h1 className="text-3xl font-bold text-white text-center">
           <EncryptedText
-            text="Jarson.ai"
+            text="JASPER.AI"
             revealDelayMs={70}
             flipDelayMs={25}
             loop

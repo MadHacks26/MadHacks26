@@ -83,7 +83,7 @@ export default function Home() {
       <div className="mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14 flex flex-col gap-8">
         <div className="flex items-center justify-between gap-4">
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
-            JARSON.AI
+            JASPER.AI
           </p>
           <div className="flex items-center gap-3">
             <span className="text-xs text-neutral-400 hidden sm:block">

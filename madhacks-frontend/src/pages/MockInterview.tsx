@@ -194,7 +194,7 @@ export default function MockInterview() {
             onClick={exitSession}
             className="inline-flex items-center justify-center rounded-xl bg-[#1c2b2b] text-white px-4 py-2 text-sm font-semibold transition hover:bg-neutral-800 active:scale-[0.99]"
           >
-            ← Exit
+            Exit
           </button>
         </header>
 
@@ -299,7 +299,7 @@ export default function MockInterview() {
               onClick={handleDoneAnswering}
               className="inline-flex items-center justify-center bg-[#7aecc4] text-black tracking-wide rounded-xl px-6 py-3 text-sm font-semibold transition hover:bg-[#1c2b2b] hover:text-white active:scale-[0.99] disabled:opacity-30 disabled:cursor-not-allowed"
             >
-              {qIndex + 1 >= TOTAL_QUESTIONS ? "Finish interview →" : "Done answering →"}
+              {qIndex + 1 >= TOTAL_QUESTIONS ? "Finish interview →" : "Done"}
             </button>
 
             <button
