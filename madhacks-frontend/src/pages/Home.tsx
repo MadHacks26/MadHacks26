@@ -1,11 +1,12 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import LevelSlider from "../components/LevelSlider";
 import { useNavigate } from "react-router-dom";
+import LevelSlider from "../components/LevelSlider";
 
 type Step = 0 | 1 | 2 | 3 | 4;
 
 const PROFILE_KEY = "madhacks_profile_v1";
+const ROADMAP_KEY = "madhacks_roadmap_data_v1";
 
 function saveProfile(profile: any) {
   localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
@@ -46,9 +47,7 @@ function parseHours(s: string) {
 
 const pageWrap =
   "min-h-screen bg-neutral-50 text-neutral-900 selection:bg-neutral-900 selection:text-white";
-
 const container = "mx-auto w-full max-w-5xl px-4 py-10 sm:px-6 sm:py-14";
-
 const card = "rounded-2xl border border-neutral-200 bg-white shadow-sm";
 
 const inputBase =
@@ -118,6 +117,7 @@ function buildConceptProfile(params: {
 
 export default function Home() {
   const navigate = useNavigate();
+
   const [step, setStep] = React.useState<Step>(0);
 
   const [dsaConcepts, setDsaConcepts] = React.useState<Record<string, number>>({
@@ -138,6 +138,9 @@ export default function Home() {
 
   const [conceptsLoading, setConceptsLoading] = React.useState(false);
   const [conceptsError, setConceptsError] = React.useState<string | null>(null);
+
+  const [roadmapLoading, setRoadmapLoading] = React.useState(false);
+  const [roadmapError, setRoadmapError] = React.useState<string | null>(null);
 
   const [name, setName] = React.useState("");
   const [role, setRole] = React.useState("");
@@ -183,7 +186,6 @@ export default function Home() {
     setConceptsError(null);
 
     try {
-      // const r = await fetch("http://127.0.0.1:8000/api/concepts", { ... })
       const r = await fetch("/api/concepts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -234,7 +236,6 @@ export default function Home() {
 
       setDsaConcepts(cleanDsa);
       setCoreConcepts(cleanCore);
-
       return true;
     } catch (e: any) {
       setConceptsError(e?.message ?? "Failed to generate concepts");
@@ -290,7 +291,24 @@ export default function Home() {
     };
   }, []);
 
-  function finish() {
+  async function finish() {
+    setRoadmapLoading(true);
+    setRoadmapError(null);
+
+    const prepDaysNum = parsePositiveInt(prepDays);
+    const hoursNum = Number(hoursPerDay);
+
+    if (
+      prepDaysNum == null ||
+      !Number.isFinite(hoursNum) ||
+      hoursNum <= 0 ||
+      hoursNum > 23
+    ) {
+      setRoadmapError("Please enter valid prep days and hours per day.");
+      setRoadmapLoading(false);
+      return;
+    }
+
     const conceptProfile = buildConceptProfile({
       dsaConcepts,
       dsaLevels,
@@ -304,9 +322,8 @@ export default function Home() {
       role: role.trim(),
       company: company.trim(),
       jobLink: jobLink.trim(),
-      prepDays: parsePositiveInt(prepDays),
-      hoursPerDay: parseHours(hoursPerDay),
-
+      prepDays: prepDaysNum,
+      hoursPerDay: hoursNum,
       dsaLevels,
       coreLevels,
       dsaConcepts,
@@ -316,7 +333,41 @@ export default function Home() {
 
     saveProfile(payload);
 
-    navigate("/summary");
+    try {
+      const r = await fetch("/api/roadmap", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          role: payload.role,
+          company: payload.company,
+          jobLink: payload.jobLink,
+          prepDays: payload.prepDays,
+          hoursPerDay: payload.hoursPerDay,
+          conceptProfile: payload.conceptProfile,
+        }),
+      });
+
+      if (!r.ok) {
+        const text = await r.text();
+        console.error("[Home] /api/roadmap error:", text);
+        throw new Error(text);
+      }
+
+      const roadmapJson = await r.json();
+      console.log("[Home] /api/roadmap response:", roadmapJson);
+      console.log("[Home] saving ROADMAP_KEY =", ROADMAP_KEY);
+      localStorage.setItem(ROADMAP_KEY, JSON.stringify(roadmapJson));
+      console.log(
+        "[Home] stored ROADMAP_KEY length:",
+        localStorage.getItem(ROADMAP_KEY)?.length
+      );
+
+      navigate("/summary");
+    } catch (e: any) {
+      setRoadmapError(e?.message ?? "Failed to generate roadmap");
+    } finally {
+      setRoadmapLoading(false);
+    }
   }
 
   return (
@@ -661,6 +712,10 @@ export default function Home() {
                     ))}
                   </div>
 
+                  {roadmapError && (
+                    <p className="mt-4 text-sm text-red-600">{roadmapError}</p>
+                  )}
+
                   <div className="mt-8 flex items-center justify-between">
                     <button className={buttonGhost} onClick={back}>
                       Back
@@ -670,11 +725,16 @@ export default function Home() {
                         className={buttonGhost}
                         onClick={() => setStep(0)}
                         title="Start over"
+                        disabled={roadmapLoading}
                       >
                         Reset
                       </button>
-                      <button className={buttonPrimary} onClick={finish}>
-                        Build my roadmap
+                      <button
+                        className={buttonPrimary}
+                        onClick={finish}
+                        disabled={roadmapLoading}
+                      >
+                        {roadmapLoading ? "Building..." : "Build my roadmap"}
                       </button>
                     </div>
                   </div>
