@@ -213,6 +213,9 @@ export default function Dashboard() {
             <button className={buttonGhost} onClick={() => navigate("/summary")}>
               Back
             </button>
+            <button className={buttonGhost} onClick={() => navigate("/mock-interview")}>
+              Mock
+           </button>
             <button
               className={buttonGhost}
               onClick={() => {
