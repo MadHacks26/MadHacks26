@@ -4,7 +4,7 @@ Stores roadmap JSON in Firestore at users/{user_id} with structure:
 { roadmaps: { [company_name]: roadmap_json } }
 """
 
-from typing import Any
+from typing import Any, Dict, List
 
 from db.firebase import db
 
@@ -41,27 +41,28 @@ def get_roadmaps_by_user_id(
 from typing import Dict
 
 
-def get_urls_for_user(user_id: str) -> Dict[str, Dict[str, bool]]:
+def get_urls_for_user(user_id: str) -> Dict[str, bool]:
     doc_ref = db.collection(USERS_COLLECTION).document(user_id)
     doc = doc_ref.get()
 
-    if not doc.exists:
-        return {"urls": {}}
+    existing_urls_list: List[Dict[str, Any]] = []
 
-    data = doc.to_dict() or {}
-    urls = data.get("urls", {})
+    if doc.exists:
+        data = doc.to_dict() or {}
+        urls_field = data.get("urls", [])
+        if isinstance(urls_field, list):
+            existing_urls_list = [
+                item for item in urls_field
+                if isinstance(item, dict) and "url" in item
+            ]
 
-    if not isinstance(urls, dict):
-        return {"urls": {}}
-
-    # Ensure clean output
-    cleaned_urls = {
-        str(k): bool(v)
-        for k, v in urls.items()
-        if isinstance(k, str)
+    existing_url_map = {
+        item["url"]: bool(item.get("checked", False))
+        for item in existing_urls_list
+        if isinstance(item.get("url"), str)
     }
 
-    return {"urls": cleaned_urls}
+    return existing_url_map
 
 def extract_urls_and_update_db(
     user_id: str,
@@ -77,11 +78,9 @@ def extract_urls_and_update_db(
 
     # 🔹 Step 1: Extract URLs from roadmap
     extracted_urls: set[str] = set()
-    print("HERE")
     roadmap = roadmap_json.get("roadmap", [])
     if not isinstance(roadmap, list):
         return
-    print(roadmap)
     for day_obj in roadmap:
         if not isinstance(day_obj, dict):
             continue
@@ -99,7 +98,6 @@ def extract_urls_and_update_db(
                 cleaned = url.strip()
                 if cleaned:
                     extracted_urls.add(cleaned)
-    print(extracted_urls)
     if not extracted_urls:
         return
 
@@ -107,19 +105,49 @@ def extract_urls_and_update_db(
     doc_ref = db.collection(USERS_COLLECTION).document(user_id)
     doc = doc_ref.get()
 
-    existing_urls = {}
-    if doc.exists:
-        data = doc.to_dict() or {}
-        existing_urls = data.get("urls", {})
-        if not isinstance(existing_urls, dict):
-            existing_urls = {}
-    print(existing_urls)
+    existing_urls = get_urls_for_user(user_id)
 
-    # 🔹 Step 4: Write to Firestore only if needed
-    if existing_urls != {}:
-        updates = {}
-        for url in extracted_urls:
-            if url not in existing_urls:
-                updates[f"urls.{url}"] = False
-    else:
-        doc_ref.set({"urls": {url: False for url in extracted_urls}}, merge=True)
+    new_entries = [
+        {"url": url, "checked": False}
+        for url in extracted_urls
+        if url not in existing_urls
+    ]
+
+    existing_urls_list = [{"url": url, "checked": checked} for url, checked in existing_urls.keys()]
+
+    updated_urls = existing_urls_list + new_entries
+
+    # 🔹 Step 5: Write back merged array
+    doc_ref.set(
+        {"urls": updated_urls},
+        merge=True
+    )
+
+
+def get_url_status(user_id: str, url: str) -> bool:
+    if not url or not isinstance(url, str):
+        return False
+
+    existing_urls = get_urls_for_user(user_id)
+    
+    return existing_urls.get(url)
+
+def set_url_status(user_id: str, url: str, checked: bool) -> None:
+    if not url or not isinstance(url, str):
+        return False
+    
+    doc_ref = db.collection(USERS_COLLECTION).document(user_id)
+    doc = doc_ref.get()
+
+    if not doc.exists:
+        return None
+
+    existing_urls = get_urls_for_user(user_id)
+    existing_urls_list = [{"url": u, "checked": c} for u, c in existing_urls.items() if u != url]
+    existing_urls_list.append({"url": url, "checked": checked})
+
+    doc_ref.set(
+        {"urls": existing_urls_list},
+        merge=True
+    )
+    

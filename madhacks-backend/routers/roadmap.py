@@ -8,6 +8,8 @@ from services.crud import (
     save_roadmap_dump,
     get_roadmaps_by_user_id,
     extract_urls_and_update_db,
+    get_url_status,
+    set_url_status
 )
 
 router = APIRouter(prefix="/api/roadmap", tags=["roadmap"])
@@ -20,6 +22,15 @@ class SaveRoadmapRequest(BaseModel):
 
 class ExtractUrlsRequest(BaseModel):
     roadmap_json: dict[str, Any] = Field(..., description="Roadmap with roadmap[].checklist[].url")
+
+
+class GetItemRequest(BaseModel):
+    url: str = Field(..., description="URL to get status for")
+
+
+class SaveItemRequest(BaseModel):
+    url: str = Field(..., description="URL to update")
+    checked: bool = Field(..., description="Checked status")
 
 
 @router.post("/save")
@@ -45,5 +56,32 @@ def get_roadmaps(user_id : str):
         user_id = user_id
         result = get_roadmaps_by_user_id(user_id)
         return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/getitem")
+def get_roadmap_item(
+    req: GetItemRequest,
+
+    user: dict = Depends(verify_firebase_token),
+):
+    try:
+        user_id = user['uid']
+        status = get_url_status(user_id, req.url)
+        return {"url": req.url, "checked": status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/putitem")
+def save_roadmap_item(
+    req: SaveItemRequest,
+
+    user: dict = Depends(verify_firebase_token),
+):
+    try:
+        user_id = user['uid']
+        set_url_status(user_id, req.url, req.checked)
+        return {"ok": True, "message": "Item updated"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
