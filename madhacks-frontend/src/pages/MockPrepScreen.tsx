@@ -184,7 +184,7 @@ export default function MockPrepScreen() {
 
   return (
     <div className="min-h-screen bg-black text-white">
-      <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto w-full max-w-5xl px-4 pt-10 pb-3">
         <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
           MOCK INTERVIEW
         </p>
@@ -192,8 +192,68 @@ export default function MockPrepScreen() {
           Before we begin, verify your setup.
         </h1>
 
-        <div className="mt-8 grid gap-5 sm:grid-cols-2">
-          <div className="w-full max-w-full overflow-hidden rounded-2xl border-2 border-[#202026] bg-black p-5">
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
+          <div className="rounded-2xl border-2 border-[#202026] bg-black p-5 lg:col-span-1">
+            <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
+              Interview Details
+            </p>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 mb-2 text-white">
+              {[
+                { label: "Duration", value: "~ 15 mins" },
+                { label: "Questions", value: "3" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-3"
+                >
+                  <p className="text-xs text-neutral-300 font-semibold uppercase tracking-wide">
+                    {item.label}
+                  </p>
+                  <p className="mt-1 text-sm font-semibold text-white">
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border-2 border-[#202026] bg-black p-5 lg:col-span-1">
+            <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
+              System Checks
+            </p>
+
+            <div className="flex flex-col gap-2.5">
+              {checks.map((c) => (
+                <div
+                  key={c.id}
+                  className={statusRowCls(c.status)}
+                  onClick={() => {
+                    if (c.id === "mic") toggleMic();
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) =>
+                    e.key === "Enter" && c.id === "mic" && toggleMic()
+                  }
+                >
+                  <div className={statusIconWrapCls(c.status)}>{c.icon}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-white">
+                      {c.name}
+                    </div>
+                    <div className="text-xs text-neutral-500 mt-0.5">
+                      {c.sub}
+                    </div>
+                  </div>
+                  <span className={statusBadgeCls(c.status)}>
+                    {badgeLabel(c.status)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="w-full max-w-full overflow-hidden rounded-2xl border-2 border-[#202026] bg-black p-5 lg:col-span-1">
             <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
               Microphone Test
             </p>
@@ -248,67 +308,6 @@ export default function MockPrepScreen() {
                 );
               })}
             </select>
-          </div>
-
-          <div className="rounded-2xl border-2 border-[#202026] bg-black p-5">
-            <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
-              System Checks
-            </p>
-
-            <div className="flex flex-col gap-2.5">
-              {checks.map((c) => (
-                <div
-                  key={c.id}
-                  className={statusRowCls(c.status)}
-                  onClick={() => {
-                    if (c.id === "mic") toggleMic();
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) =>
-                    e.key === "Enter" && c.id === "mic" && toggleMic()
-                  }
-                >
-                  <div className={statusIconWrapCls(c.status)}>{c.icon}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-semibold text-white">
-                      {c.name}
-                    </div>
-                    <div className="text-xs text-neutral-500 mt-0.5">
-                      {c.sub}
-                    </div>
-                  </div>
-                  <span className={statusBadgeCls(c.status)}>
-                    {badgeLabel(c.status)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-5 rounded-2xl border-2 border-[#202026] bg-black p-5">
-          <p className="text-xs font-semibold text-white uppercase tracking-wide mb-4">
-            Interview Details
-          </p>
-
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-2 text-white">
-            {[
-              { label: "Duration", value: "~ 15 mins" },
-              { label: "Questions", value: "3" },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className="rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-3"
-              >
-                <p className="text-xs text-neutral-300 font-semibold uppercase tracking-wide">
-                  {item.label}
-                </p>
-                <p className="mt-1 text-sm font-semibold text-white">
-                  {item.value}
-                </p>
-              </div>
-            ))}
           </div>
         </div>
 

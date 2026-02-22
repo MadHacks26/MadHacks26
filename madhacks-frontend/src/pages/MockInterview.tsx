@@ -213,7 +213,7 @@ export default function MockInterview() {
     <>
       <style>{styles}</style>
       <div className="min-h-screen bg-black text-white flex flex-col">
-        <div className="mx-auto w-full max-w-5xl px-4 pt-10 pb-5">
+        <div className="mx-auto w-full max-w-5xl px-4 pt-10 pb-3">
           <p className="text-sm font-semibold tracking-wide text-[#7aecc4]">
             MOCK INTERVIEW
           </p>

@@ -138,9 +138,8 @@ export default function Home() {
                     key={rm.id}
                     onMouseEnter={() => setHoveredId(rm.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    className="relative overflow-hidden rounded-2xl border-2 border-[#202026] bg-[#090b10] p-5 flex flex-col gap-4 transition-all hover:border-[#7aecc4]/20 hover:shadow-[0_0_0_2px_rgba(122,236,196,0.25),0_0_24px_rgba(122,236,196,0.10)]"
+                    className="relative overflow-hidden rounded-2xl border border-[#202026] bg-[#090b10] p-5 flex flex-col gap-4 transition-all hover:border-[#7aecc4]/20 hover:shadow-[0_0_0_2px_rgba(122,236,196,0.25),0_0_24px_rgba(122,236,196,0.10)]"
                   >
-                    {/* hover spread effect */}
                     <AnimatePresence>
                       {hovered && (
                         <motion.div
@@ -154,7 +153,7 @@ export default function Home() {
                             containerClassName="bg-transparent"
                             colors={[
                               [122, 236, 196], // #7aecc4
-                              [139, 92, 246], // purple accent like demo
+                              [139, 92, 246],
                             ]}
                             opacities={[
                               0.15, 0.15, 0.15, 0.15, 0.15,
@@ -167,7 +166,6 @@ export default function Home() {
                     </AnimatePresence>
                     <div className="absolute inset-0 z-0 pointer-events-none [mask-image:radial-gradient(240px_at_center,white,transparent)] bg-black/40" />
 
-                    {/* content */}
                     <div className="relative z-10 flex flex-col gap-4">
                       <div className="flex flex-col gap-1">
                         <h3 className="text-lg font-bold text-white">
