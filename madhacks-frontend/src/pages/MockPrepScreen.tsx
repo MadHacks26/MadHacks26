@@ -222,9 +222,9 @@ export default function MockPrepScreen() {
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-5">
             {[
-              { label: "Duration",    value: "~30 min"       },
+              { label: "Duration",    value: "~15 min"       },
               { label: "Format",      value: "Technical · DSA" },
-              { label: "Questions",   value: "5 total"       },
+              { label: "Questions",   value: "3 total"       },
               { label: "Interviewer", value: "AI voice"      },
             ].map((item) => (
               <div key={item.label} className="rounded-xl border-2 border-[#202026] bg-[#090b10] px-3 py-3">

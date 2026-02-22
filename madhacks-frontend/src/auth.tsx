@@ -60,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = React.useCallback(async () => {
     if (!auth) return;
+    await clearAllLocalStorage();
     await firebaseSignOut(auth);
     setState((s) => ({ ...s, user: null, error: null }));
   }, []);
@@ -67,6 +68,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const getIdToken = React.useCallback(async (): Promise<string | null> => {
     if (!auth?.currentUser) return null;
     return auth.currentUser.getIdToken();
+  }, []);
+
+  // Function to delete all local storage items and call it on logout
+  const clearAllLocalStorage = React.useCallback(() => {
+    localStorage.clear();
   }, []);
 
   const clearError = React.useCallback(() => {

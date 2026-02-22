@@ -231,6 +231,9 @@ export default function Create() {
       });
       if (!r.ok) throw new Error(await r.text());
       const data = (await r.json()) as Partial<ConceptsResponse>;
+
+      // To debug
+      // let data = JSON.parse(localStorage.getItem("madhacks_profile_v1") ?? "")
       if (
         !data.dsaConcepts ||
         typeof data.dsaConcepts !== "object" ||
@@ -263,6 +266,7 @@ export default function Create() {
       }
       setDsaConcepts(cleanDsa);
       setCoreConcepts(cleanCore);
+
       return true;
     } catch (e: any) {
       setConceptsError(e?.message ?? "Failed to generate concepts");
@@ -371,15 +375,8 @@ export default function Create() {
       }
       const roadmapJson = await r.json();
       localStorage.setItem(ROADMAP_KEY, JSON.stringify(roadmapJson));
-      const companyName =
-        (roadmapJson as { company?: string }).company || payload.company;
-      if (user?.uid)
-        appendRoadmapToList({
-          uid: user.uid,
-          company: companyName,
-          role: payload.role,
-          roadmapJson,
-        });
+      const companyName = (roadmapJson as { company?: string }).company || payload.company;
+      if (user?.uid) appendRoadmapToList({ uid: user.uid, company: companyName, role: payload.role, roadmapJson });
       const token = await getIdToken();
       if (token) {
         await fetch(`${API_BASE}/api/roadmap/save`, {
