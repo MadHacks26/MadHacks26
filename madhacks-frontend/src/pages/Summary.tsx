@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../auth";
 
 const ROADMAP_KEY = "madhacks_roadmap_data_v1";
 
@@ -55,7 +54,6 @@ function initials(label: string) {
 
 export default function Summary() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
 
   const [summary] = React.useState<SummaryShape>(() => {
     const stored = safeParseRoadmapSummary();
@@ -86,18 +84,6 @@ export default function Summary() {
 
   return (
     <div className={pageWrap}>
-      <header className="sticky top-0 z-10 flex items-center justify-end border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
-        <button
-          type="button"
-          className="rounded-xl border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50"
-          onClick={async () => {
-            await logout();
-            navigate("/auth");
-          }}
-        >
-          Logout
-        </button>
-      </header>
       <div className={container}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -112,12 +98,6 @@ export default function Summary() {
 
         <div className="mt-6">
           <div className={`${card} overflow-hidden`}>
-            {/* <div className="border-b border-neutral-200 bg-neutral-50 px-5 py-4">
-              <h2 className="text-sm font-semibold text-neutral-900">
-                Major focus areas
-              </h2>
-            </div> */}
-
             <div className="p-5">
               <div className="grid gap-3 sm:grid-cols-2">
                 {focusEntries.map(([topic, note]) => (
@@ -142,20 +122,12 @@ export default function Summary() {
               </div>
 
               <div className="mt-6 flex flex-col items-center justify-between gap-3 rounded-2xl p-0 sm:flex-row">
-                {/* <div className="text-center sm:text-left">
-                  <p className="text-sm font-semibold text-neutral-900">
-                    Ready to start?
-                  </p>
-                  <p className="mt-1 text-xs text-neutral-600">
-                    Your dashboard has the day-by-day checklist and progress.
-                  </p>
-                </div> */}
                 <button className={buttonGhost} onClick={() => navigate("/")}>
                   Start Over
                 </button>
                 <button
                   className={buttonPrimary}
-                  onClick={() => navigate("/dashboard")}
+                  onClick={() => navigate("/roadmap")}
                 >
                   View Roadmap
                 </button>
